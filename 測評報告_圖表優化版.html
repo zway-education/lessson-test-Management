@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>測評報告｜圖表優化版</title>
+<script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:#dde2ea;min-height:100vh;padding:18px 14px}
+#app{max-width:1040px;margin:0 auto}
+
+/* ── TOP NAV ── */
+.top-nav{display:flex;gap:8px;margin-bottom:16px;background:#fff;padding:10px 14px;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.1);align-items:center;flex-wrap:wrap}
+.nav-label{font-size:10px;color:#aaa;letter-spacing:2px;font-weight:700;margin-right:2px;flex-shrink:0}
+.tab-btn{padding:9px 22px;border-radius:22px;border:2px solid #e0e0e0;font-size:13px;font-weight:700;cursor:pointer;background:#f7f7f7;color:#999;transition:all .2s;font-family:inherit;line-height:1}
+.tab-btn.active.qm{background:linear-gradient(135deg,#FF8C00,#FF5500);border-color:#FF6B35;color:#fff;box-shadow:0 4px 12px rgba(255,107,53,.32)}
+.tab-btn.active.zy{background:linear-gradient(135deg,#1A5FBF,#1251A3);border-color:#1251A3;color:#fff;box-shadow:0 4px 12px rgba(18,81,163,.32)}
+.tab-btn.active.kz{background:linear-gradient(135deg,#239B4A,#1B6E35);border-color:#1B6E35;color:#fff;box-shadow:0 4px 12px rgba(27,110,53,.32)}
+.tab-btn.active.cmp{background:linear-gradient(135deg,#5E35B1,#4527A0);border-color:#4527A0;color:#fff;box-shadow:0 4px 12px rgba(94,53,177,.32)}
+.cls{display:none}.cls.active{display:block}
+.report{border-radius:16px;overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.13)}
+
+/* ── QM ── */
+.qm-wrap{background-color:#FFF8EE;background-image:radial-gradient(circle,#FF6B3520 1.5px,transparent 1.5px);background-size:22px 22px;padding-bottom:4px}
+.qm-banner{background:linear-gradient(135deg,#FF8C00,#FF5500);color:#fff;position:relative;overflow:hidden}
+.qm-banner::before{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;background:rgba(255,255,255,.06);border-radius:50%}
+.qm-banner .ds{text-align:center;padding:5px;font-size:12px;letter-spacing:6px;background:rgba(0,0,0,.12)}
+.qm-banner .bb{padding:20px 22px 18px;display:flex;align-items:flex-start;gap:14px;position:relative;z-index:1}
+.qm-banner .av{width:54px;height:54px;background:rgba(255,255,255,.2);border:2.5px solid rgba(255,255,255,.5);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.qm-sec{background:#fff;border:2.5px dashed #FFAA7080;border-radius:13px;padding:18px;margin:10px;position:relative;overflow:hidden}
+.qm-st{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#FF8C00,#FF5500);color:#fff;padding:5px 16px 5px 10px;border-radius:18px;font-weight:900;font-size:13px;transform:rotate(-1deg);box-shadow:3px 3px 0 rgba(255,107,53,.28);margin-bottom:14px}
+.qm-st .nb{background:rgba(255,255,255,.3);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.qm-hl{background:linear-gradient(135deg,#FFF3E0,#FFE0B2);border:2px solid #FFCC80;border-radius:9px;padding:11px;text-align:center}
+.qm-hl .v{font-size:26px;font-weight:900;color:#FF8C00;line-height:1}
+.qm-hl .l{font-size:10px;color:#FF8C00;opacity:.8;margin-top:2px;font-weight:600}
+
+/* ── ZY ── */
+.zy-wrap{background-color:#EEF3FF;background-image:radial-gradient(circle,#1251A320 1.5px,transparent 1.5px);background-size:28px 28px;padding-bottom:4px}
+.zy-banner{background:linear-gradient(135deg,#0F3D8A,#1A5FBF);color:#C8DEFF;position:relative;overflow:hidden}
+.zy-banner::before{content:'ASSESSMENT SYSTEM';position:absolute;right:16px;bottom:10px;font-family:monospace;font-size:36px;font-weight:900;color:rgba(255,255,255,.04);white-space:nowrap}
+.zy-banner .ds{padding:4px 14px;display:flex;justify-content:space-between;color:#90B8FF;font-family:monospace;font-size:9px;border-bottom:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);letter-spacing:1px}
+.zy-banner .bb{padding:20px 22px 18px;display:flex;align-items:flex-start;gap:14px;position:relative;z-index:1}
+.zy-banner .av{width:54px;height:54px;background:rgba(255,255,255,.1);border:1px solid rgba(200,222,255,.4);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.zy-sec{background:#fff;border:1px solid #1251A326;border-radius:3px;padding:18px;margin:10px;position:relative}
+.zy-sec::before,.zy-sec::after{content:'';position:absolute;width:12px;height:12px;border-color:#1251A3;border-style:solid}
+.zy-sec::before{top:5px;left:5px;border-width:2px 0 0 2px}
+.zy-sec::after{top:5px;right:5px;border-width:2px 2px 0 0}
+.zy-sec-b::before,.zy-sec-b::after{content:'';position:absolute;width:12px;height:12px;border-color:#1251A3;border-style:solid}
+.zy-sec-b::before{bottom:5px;left:5px;border-width:0 0 2px 2px}
+.zy-sec-b::after{bottom:5px;right:5px;border-width:0 2px 2px 0}
+.zy-tt{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.zy-tt .dm{width:9px;height:9px;border:2px solid #1251A3;transform:rotate(45deg);flex-shrink:0}
+.zy-tt .tx{font-family:monospace;color:#1251A3;font-weight:700;font-size:11px;letter-spacing:3px}
+.zy-tt .rl{flex:1;height:1px;background:linear-gradient(90deg,#1251A360,transparent)}
+.zy-tt .eg{font-family:monospace;font-size:9px;color:#1251A3;opacity:.35}
+.zy-kpi{background:#EEF3FF;border:1px solid #1251A318;border-radius:3px;padding:11px;text-align:center}
+.zy-kpi .v{font-size:26px;font-weight:900;color:#1251A3;font-family:monospace;line-height:1}
+.zy-kpi .l{font-size:9px;color:#1251A3;opacity:.6;margin-top:3px;font-family:monospace}
+
+/* ── KZ ── */
+.kz-wrap{background-color:#EDF8F1;background-image:repeating-linear-gradient(90deg,transparent,transparent 40px,#1B6E3512 40px,#1B6E3512 41px),repeating-linear-gradient(0deg,transparent,transparent 40px,#1B6E3512 40px,#1B6E3512 41px);padding-bottom:4px}
+.kz-banner{background:linear-gradient(135deg,#145228,#1B6E35,#239B4A);color:#D4EDDA;position:relative;overflow:hidden}
+.kz-banner::before{content:'COGNITIVE ANALYTICS';position:absolute;right:16px;bottom:10px;font-family:monospace;font-size:36px;font-weight:900;color:rgba(255,255,255,.04);white-space:nowrap}
+.kz-banner .ds{padding:4px 14px;display:flex;justify-content:space-between;color:#90DBA8;font-family:monospace;font-size:9px;border-bottom:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.18);letter-spacing:1px}
+.kz-banner .bb{padding:20px 22px 18px;display:flex;align-items:flex-start;gap:14px;position:relative;z-index:1}
+.kz-banner .av{width:54px;height:54px;background:rgba(255,255,255,.1);border:1px solid rgba(212,237,218,.4);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.kz-sec{background:#fff;border:1px solid #1B6E3522;border-radius:3px;padding:18px;margin:10px;position:relative}
+.kz-sec::before,.kz-sec::after{content:'';position:absolute;width:12px;height:12px;border-color:#1B6E35;border-style:solid}
+.kz-sec::before{top:5px;left:5px;border-width:2px 0 0 2px}
+.kz-sec::after{top:5px;right:5px;border-width:2px 2px 0 0}
+.kz-sec-b::before,.kz-sec-b::after{content:'';position:absolute;width:12px;height:12px;border-color:#1B6E35;border-style:solid}
+.kz-sec-b::before{bottom:5px;left:5px;border-width:0 0 2px 2px}
+.kz-sec-b::after{bottom:5px;right:5px;border-width:0 2px 2px 0}
+.kz-tt{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.kz-tt .dm{width:9px;height:9px;border:2px solid #1B6E35;transform:rotate(45deg);flex-shrink:0}
+.kz-tt .tx{font-family:monospace;color:#1B6E35;font-weight:700;font-size:11px;letter-spacing:2px}
+.kz-tt .rl{flex:1;height:1px;background:linear-gradient(90deg,#1B6E3560,transparent)}
+.kz-tt .eg{font-family:monospace;font-size:9px;color:#1B6E35;opacity:.35}
+.kz-kpi{background:#EDF8F1;border:1px solid #1B6E3516;border-radius:3px;padding:11px;text-align:center}
+.kz-kpi .v{font-size:26px;font-weight:900;color:#1B6E35;font-family:monospace;line-height:1}
+.kz-kpi .l{font-size:9px;color:#1B6E35;opacity:.6;margin-top:3px;font-family:monospace}
+
+/* ── SHARED ── */
+.org{font-size:9px;opacity:.5;letter-spacing:3px;margin-bottom:3px;font-family:monospace}
+.ttl{font-size:19px;font-weight:900;letter-spacing:.5px;line-height:1.2}
+.meta{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;opacity:.82;margin-top:8px}
+.iph{border:2px dashed rgba(150,150,150,.3);border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:rgba(255,255,255,.6);flex-shrink:0}
+.iph-l{font-size:9px;font-weight:700;letter-spacing:1px;opacity:.6}
+.ch240{position:relative;height:240px;margin-top:8px}
+.ch220{position:relative;height:220px;margin-top:8px}
+.ch200{position:relative;height:200px;margin-top:8px}
+.ch180{position:relative;height:180px;margin-top:8px}
+.ch160{position:relative;height:160px}
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+.fc{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:10px}
+.slbl{font-size:11px;font-weight:700;color:#666;margin-bottom:5px}
+.stbl{width:100%;border-collapse:collapse;font-size:11px;margin-top:10px}
+.stbl th{font-weight:700;padding:7px 8px;border:1px solid #e8e8e8;text-align:center;font-size:10px}
+.stbl td{padding:7px 8px;border:1px solid #e8e8e8;text-align:center}
+.stbl tr:hover td{background:#fafafa}
+.emo{font-size:16px;line-height:1}
+.tag{padding:2px 8px;border-radius:3px;font-size:10px;font-family:monospace;display:inline-block}
+.tw{background:#FFF3E0;color:#E65100;border:1px solid #FFCC80}
+.lgr{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#666;margin-bottom:5px}
+.ld{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle}
+.sbg{height:7px;border-radius:4px;overflow:hidden;background:#eee;margin-top:3px}
+.sbf{height:100%;border-radius:4px}
+.qa{margin-top:8px;padding:7px 10px;background:#fafafa;border-radius:5px}
+.qq{font-weight:700;color:#555;font-size:11px}
+.qa-a{color:#333;font-size:12px;margin-top:3px;padding-left:6px;font-weight:500}
+.ftr{padding:12px 20px;text-align:center;color:#bbb;font-size:9px;border-top:1px solid rgba(0,0,0,.05);letter-spacing:1.5px;font-family:monospace}
+.qm-iz{background:linear-gradient(135deg,#FFF8EE,#FFE0B2);border:2px dashed #FFAA7080}
+.zy-iz{background:linear-gradient(135deg,#EEF3FF,#DCE9FF);border:1px dashed #1251A444}
+.kz-iz{background:linear-gradient(135deg,#EDF8F1,#D4EDDA);border:1px dashed #1B6E3544}
+
+/* ── COMPARISON TAB ── */
+.cmp-header{background:linear-gradient(135deg,#4527A0,#6A1B9A);color:#fff;border-radius:12px;padding:18px 22px;margin-bottom:16px}
+.cmp-header h2{font-size:18px;font-weight:900;margin-bottom:4px}
+.cmp-header p{font-size:12px;opacity:.7;font-family:monospace}
+.cmp-grid{display:flex;flex-direction:column;gap:16px}
+.cmp-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.1)}
+.cmp-card-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f0f0f0;background:#fafafa}
+.cmp-card-head .ctag{padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700}
+.cmp-card-head .ctag.qm{background:#FFF3E0;color:#E65100;border:1px solid #FFCC80}
+.cmp-card-head .ctag.zy{background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9}
+.cmp-card-head .ctag.kz{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7}
+.cmp-card-head .section-name{font-weight:700;font-size:13px;flex:1}
+.change-pill{padding:3px 10px;border-radius:10px;font-size:10px;font-family:monospace;background:#EDE7F6;color:#4527A0;border:1px solid #B39DDB}
+.cmp-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.cmp-side{padding:14px 16px;border-right:1px solid #f0f0f0}
+.cmp-side:last-child{border-right:none}
+.cmp-side-label{font-size:10px;font-weight:700;letter-spacing:1.5px;padding:4px 10px;border-radius:6px;display:inline-block;margin-bottom:10px}
+.cmp-side-label.old{background:#f5f5f5;color:#888;border:1px solid #e0e0e0}
+.cmp-side-label.new{background:linear-gradient(135deg,#EDE7F6,#D1C4E9);color:#4527A0;border:1px solid #B39DDB}
+.cmp-note{padding:10px 16px;background:#F9F5FF;border-top:1px solid #EDE7F6;font-size:11px;color:#5E35B1;line-height:1.6;font-family:monospace}
+
+/* gauge wrapper */
+.gauge-wrap{position:relative;height:120px;margin-top:8px}
+.gauge-label{position:absolute;bottom:8px;width:100%;text-align:center;font-size:22px;font-weight:900;line-height:1;font-family:monospace}
+
+.info-compact{background:rgba(255,255,255,0.6);border-radius:6px;padding:7px 10px 4px 12px;margin-bottom:10px}
+.ic-row{display:grid;grid-template-columns:5.5em 1fr 5.5em 1fr;gap:0 6px;align-items:baseline;margin-bottom:3px;font-size:11px}
+.ic-row:last-child:has(span:nth-child(3):empty),.ic-row:last-child{grid-template-columns:5.5em 1fr}
+.ic-l{font-weight:700;color:#888;white-space:nowrap;font-size:10px}
+.ic-v{color:#333;font-size:11px}
+
+/* ═══ A4 列印樣式 ═══════════════════════════════════════ */
+@page{size:A4 portrait;margin:12mm 13mm 14mm}
+.print-fab{position:fixed;bottom:22px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.print-fab button{padding:10px 18px;border-radius:22px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;box-shadow:0 3px 12px rgba(0,0,0,0.18);transition:transform .15s}
+.print-fab button:hover{transform:translateY(-2px)}
+.btn-print{background:linear-gradient(135deg,#5E35B1,#4527A0);color:#fff}
+.print-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;align-items:center;justify-content:center}
+.print-modal-bg.open{display:flex}
+.print-modal{background:#fff;border-radius:14px;padding:24px 28px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,.22)}
+.print-modal h3{margin:0 0 16px;font-size:16px;color:#333}
+.pm-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:14px;cursor:pointer}
+.pm-row input{width:16px;height:16px;cursor:pointer;accent-color:#5E35B1}
+.pm-actions{margin-top:20px;display:flex;gap:10px;justify-content:flex-end}
+.pm-actions button{padding:8px 20px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit}
+.pm-ok{background:#5E35B1;color:#fff}
+.pm-cancel{background:#f0f0f0;color:#555}
+
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{margin:0;background:#fff}
+  .tab-bar,.print-fab,.print-modal-bg{display:none!important}
+  .cls{display:none!important}
+  .cls.print-target{display:block!important}
+  .report{box-shadow:none!important;border-radius:0!important;max-width:100%!important}
+  .qm-wrap,.zy-wrap,.kz-wrap{border-radius:0!important}
+  .qm-sec,.zy-sec,.kz-sec{break-inside:avoid;page-break-inside:avoid}
+  .print-page-break{break-before:page;page-break-before:always;display:block}
+  canvas{max-width:100%!important}
+  .ch160{height:130px!important}
+  .ch220,.ch240{height:180px!important}
+  .gauge-wrap{height:80px!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="top-nav">
+  <div class="nav-label">班別</div>
+  <button class="tab-btn qm active" onclick="sw('qm')">🌟 啟蒙班</button>
+  <button class="tab-btn zy" onclick="sw('zy')">🔬 智優班</button>
+  <button class="tab-btn kz" onclick="sw('kz')">💡 開智班</button>
+  <button class="tab-btn cmp" onclick="sw('cmp')">↔ 改前 / 改後 對比</button>
+</div>
+<!-- ══ 啟蒙班 ══ -->
+<div id="sec_qm" class="cls active"><div class="report"><div class="qm-wrap">
+  <div class="qm-banner">
+    <div class="ds">⭐ 🌟 ✨ 🎀 ✨ 🌟 ⭐ 🌟 ✨ 🎀 ✨ 🌟 ⭐</div>
+    <div class="bb">
+      <div class="av">🌟</div>
+      <div style="flex:1;color:#fff">
+        <div class="org">台灣展威文化教育 TAIWAN ZHANWEI EDUCATION</div>
+        <div class="ttl">啟蒙班幼兒學習測評報告</div>
+        <div class="meta"><span>👤 林禹希</span><span>🏫 政德 B03</span><span>📆 2024/12/04</span><span>👪 余芷芸（媽媽）</span></div>
+      </div>
+      <div class="iph qm-iz" style="width:80px;height:80px;border-radius:50%">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF8C00" stroke-width="1.5" opacity="0.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <div class="iph-l" style="color:#FF8C00">角色插圖</div>
+      </div>
+    </div>
+  </div>
+  <!-- 一 概況 -->
+  <div class="qm-sec" style="margin-top:12px">
+    <div class="qm-st"><span class="nb">一</span>學習概況</div>
+
+  <!-- 基本資料表 QM -->
+  <div class="info-compact" style="border-left:3px solid #FF8C00">
+    <div class="ic-row"><span class="ic-l">孩子姓名</span><span class="ic-v">林禹希</span><span class="ic-l">就讀班級</span><span class="ic-v">政德幼兒園 B03 班</span></div>
+    <div class="ic-row"><span class="ic-l">評量日期</span><span class="ic-v">2024 / 12 / 04</span><span class="ic-l">填寫日期</span><span class="ic-v">2024 / 12 / 04</span></div>
+    <div class="ic-row"><span class="ic-l">家長姓名</span><span class="ic-v">余芷芸（媽媽）</span><span class="ic-l">聯絡電話</span><span class="ic-v">0912-___-___</span></div>
+    <div class="ic-row"><span class="ic-l">聯絡信箱</span><span class="ic-v" style="color:#FF6B35">example@mail.com</span></div>
+  </div>
+
+    <div class="fc">
+      <div class="qm-hl"><div class="v">4.17</div><div class="l">大腦五力均值</div></div>
+      <div class="qm-hl"><div class="v">80%</div><div class="l">右腦傾向</div></div>
+      <div class="qm-hl"><div class="v">4✦</div><div class="l">多元智能均值</div></div>
+      <div class="qm-hl"><div class="v">😊</div><div class="l">關係評估</div></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px">
+      <div class="iph qm-iz" style="flex:1;height:68px;border-radius:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF8C00" stroke-width="1.5" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#FF8C00;font-size:9px">插入班級插圖</div></div>
+      <div class="iph qm-iz" style="flex:1;height:68px;border-radius:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF8C00" stroke-width="1.5" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#FF8C00;font-size:9px">活動照片</div></div>
+    </div>
+  </div>
+  <!-- 二 左右腦 -->
+  <div class="qm-sec">
+    <div class="qm-st"><span class="nb">二</span>左右腦優勢</div>
+    <div class="tc">
+      <div style="text-align:center"><div class="slbl">👨‍👩‍👧 家長評</div><div class="ch160"><canvas id="qm_bp"></canvas></div><div style="font-size:11px;color:#666;margin-top:5px">右腦 <b style="color:#FF8C00">80%</b> ｜ 左腦 <b style="color:#0288D1">20%</b></div></div>
+      <div style="text-align:center"><div class="slbl">👧 孩子評</div><div class="ch160"><canvas id="qm_bc"></canvas></div><div style="font-size:11px;color:#666;margin-top:5px">右腦 <b style="color:#EF476F">60%</b> ｜ 左腦 <b style="color:#118AB2">40%</b></div></div>
+    </div>
+  </div>
+  <!-- 三 大腦五力 -->
+  <div class="qm-sec">
+    <div class="qm-st"><span class="nb">三</span>大腦五力</div>
+    <div class="tc" style="align-items:start">
+      <div><div class="slbl" style="text-align:center">家長評（雷達圖）</div><div style="position:relative;height:240px"><canvas id="qm_rd"></canvas></div></div>
+      <div><table class="stbl"><thead><tr style="background:linear-gradient(135deg,#FF8C00,#FF5500);color:#fff"><th>項目</th><th>細項</th><th>得分</th><th>均值</th></tr></thead><tbody>
+        <tr><td rowspan="3" style="font-weight:700;color:#FF8C00">感知力</td><td>視覺</td><td>5</td><td rowspan="3" style="font-weight:900;color:#FF8C00">4.00</td></tr><tr><td>聽覺</td><td>4</td></tr><tr><td>體覺</td><td>3</td></tr>
+        <tr style="background:#FFFBF4"><td rowspan="3" style="font-weight:700;color:#FF8C00">專注力</td><td>集中</td><td>5</td><td rowspan="3" style="font-weight:900;color:#FF8C00">4.00</td></tr><tr style="background:#FFFBF4"><td>持續</td><td>5</td></tr><tr style="background:#FFFBF4"><td>選擇</td><td>2</td></tr>
+        <tr><td rowspan="3" style="font-weight:700;color:#FF8C00">理解力</td><td>語言</td><td>5</td><td rowspan="3" style="font-weight:900;color:#FF8C00">4.33</td></tr><tr><td>邏輯</td><td>3</td></tr><tr><td>情感</td><td>5</td></tr>
+        <tr style="background:#FFFBF4"><td rowspan="3" style="font-weight:700;color:#FF8C00">創造力</td><td>想法</td><td>5</td><td rowspan="3" style="font-weight:900;color:#FF8C00">4.33</td></tr><tr style="background:#FFFBF4"><td>行為</td><td>5</td></tr><tr style="background:#FFFBF4"><td>結果</td><td>3</td></tr>
+        <tr style="background:#FFF3E0"><td colspan="3" style="font-weight:700;color:#FF5500">統合力</td><td style="font-weight:900;color:#FF5500">4.17</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+  <!-- 四 多元智能 → 新: 八角雷達 -->
+  <div class="qm-sec">
+    <div class="qm-st"><span class="nb">四</span>多元智能 <span style="font-size:10px;opacity:.7;margin-left:6px;background:rgba(255,255,255,.3);padding:2px 7px;border-radius:8px">✦ 八角雷達圖</span></div>
+    <div class="tc" style="align-items:start">
+      <div>
+        <table class="stbl" style="margin-bottom:10px"><thead><tr style="background:linear-gradient(135deg,#FF8C00,#FF5500);color:#fff"><th>評估者</th><th>語言</th><th>視覺</th><th>邏輯</th><th>音樂</th><th>肢體</th><th>內省</th><th>人際</th><th>自然</th></tr></thead><tbody>
+          <tr><td style="font-weight:700">孩子評</td><td>😔</td><td>😔</td><td>😔</td><td>😊</td><td>😔</td><td>😊</td><td>😊</td><td>😊</td></tr>
+          <tr style="background:#FFFBF4"><td style="font-weight:700">家長評</td><td>5.00</td><td>4.67</td><td>5.00</td><td>4.33</td><td>5.00</td><td>5.00</td><td>5.00</td><td>4.33</td></tr>
+        </tbody></table>
+      </div>
+      <div><div class="slbl" style="text-align:center">家長評（八角雷達圖）</div><div style="position:relative;height:240px"><canvas id="qm_mi"></canvas></div></div>
+    </div>
+  </div>
+  <!-- 五 教養風格 → 新: 四象限散點 -->
+  <div class="qm-sec">
+    <div class="qm-st"><span class="nb">五</span>教養風格 <span style="font-size:10px;opacity:.7;margin-left:6px;background:rgba(255,255,255,.3);padding:2px 7px;border-radius:8px">✦ 四象限圖</span></div>
+    <div class="tc">
+      <div><div class="slbl" style="text-align:center;margin-bottom:4px">要求 × 支持 象限定位</div><div class="ch220"><canvas id="qm_pt"></canvas></div></div>
+      <div style="padding:10px 6px">
+        <div style="margin-bottom:14px"><div style="font-size:10px;color:#888;font-family:monospace">對孩子的要求</div><div style="font-size:30px;font-weight:900;color:#FF8C00;font-family:monospace">5 <span style="font-size:12px;color:#aaa">/ 5</span></div><div class="sbg"><div class="sbf" style="width:100%;background:linear-gradient(90deg,#FF8C00,#FF5500)"></div></div></div>
+        <div><div style="font-size:10px;color:#888;font-family:monospace">對孩子的支持</div><div style="font-size:30px;font-weight:900;color:#0288D1;font-family:monospace">3 <span style="font-size:12px;color:#aaa">/ 5</span></div><div class="sbg"><div class="sbf" style="width:60%;background:linear-gradient(90deg,#0288D1,#29B6F6)"></div></div></div>
+        <div style="margin-top:16px;background:#FFF3E0;border-radius:8px;padding:10px 12px;border-left:4px solid #FF8C00">
+          <div style="font-size:10px;color:#aaa;font-family:monospace;margin-bottom:3px">教養類型判斷</div>
+          <div style="font-size:15px;font-weight:900;color:#FF5500">威權型</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">高要求、低支持</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 六七 關係+環境 -->
+  <div class="qm-sec">
+    <div class="tc">
+      <div>
+        <div class="qm-st" style="margin-bottom:8px"><span class="nb">六</span>關係評估</div>
+        <div class="tc" style="margin-top:0">
+          <div style="text-align:center"><div class="slbl">家長&amp;孩子</div><div class="gauge-wrap"><canvas id="qm_g1"></canvas><div class="gauge-label" style="color:#FF8C00">5.0</div></div></div>
+          <div style="text-align:center"><div class="slbl">老師&amp;孩子</div><div class="gauge-wrap"><canvas id="qm_g2"></canvas><div class="gauge-label" style="color:#FF8C00">5.0</div></div></div>
+        </div>
+        <table class="stbl" style="margin-top:6px"><tr style="background:linear-gradient(90deg,#FF8C00,#FF6B35);color:#fff"><th>評估者</th><th>家長&amp;孩子</th><th>老師&amp;孩子</th></tr><tr><td>孩子評</td><td>😊</td><td>😊</td></tr><tr style="background:#FFFBF4"><td>家長評</td><td style="font-weight:700;color:#FF8C00">5</td><td style="font-weight:700;color:#FF8C00">5</td></tr></table>
+      </div>
+      <div>
+        <div class="qm-st" style="margin-bottom:8px"><span class="nb">七</span>環境評估</div>
+        <div class="tc" style="margin-top:0">
+          <div style="text-align:center"><div class="slbl">家庭環境</div><div class="gauge-wrap"><canvas id="qm_g3"></canvas><div class="gauge-label" style="color:#06D6A0">5.0</div></div></div>
+          <div style="text-align:center"><div class="slbl">學習環境</div><div class="gauge-wrap"><canvas id="qm_g4"></canvas><div class="gauge-label" style="color:#118AB2">5.0</div></div></div>
+        </div>
+        <div class="qa"><div class="qq">Q：孩子最喜歡？</div><div class="qa-a">🎡 遊樂園</div></div>
+        <div class="qa" style="margin-top:6px"><div class="qq">Q：孩子最不喜歡？</div><div class="qa-a">🌾 開放式農場</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="margin:10px;display:flex"><div class="iph qm-iz" style="flex:1;height:58px;border-radius:9px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF8C00" stroke-width="1.5" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#FF8C00;font-size:9px">圖片區 #4</div></div></div>
+  <div class="ftr">© 2026 台灣展威文化教育 · 本報告書由專業評測系統自動生成 · 僅供教學參考</div>
+</div></div></div>
+
+<!-- ══ 智優班 ══ -->
+<div id="sec_zy" class="cls"><div class="report"><div class="zy-wrap">
+  <div class="zy-banner">
+    <div class="ds"><span>TAIWAN ZHANWEI EDUCATION</span><span>▸ INTELLIGENCE ASSESSMENT SYSTEM v2.4</span><span>DOC-ZY-2025-001 · REV.A</span></div>
+    <div class="bb">
+      <div class="av">🔬</div>
+      <div style="flex:1;color:#C8DEFF">
+        <div class="org">台灣展威文化教育 TAIWAN ZHANWEI EDUCATION</div>
+        <div class="ttl" style="color:#fff">智優班青少年學習測評報告</div>
+        <div class="meta" style="font-family:monospace;font-size:11px"><span>■ 王大明 (Quintus)</span><span>■ 智優班 W6</span><span>■ 2025/05/25</span><span>■ 快樂國中一年級</span><span>■ 爸爸 王聰明</span></div>
+      </div>
+      <div class="iph zy-iz" style="width:80px;height:80px;border-radius:6px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1251A3" stroke-width="1.5" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#1251A3">角色插圖</div></div>
+    </div>
+  </div>
+  <div class="zy-sec zy-sec-b" style="margin-top:12px">
+    <div class="zy-tt"><div class="dm"></div><div class="tx">一　評測概覽</div><div class="rl"></div><div class="eg">OVERVIEW</div></div>
+
+  <!-- 基本資料表 ZY -->
+  <div class="info-compact" style="border-left:3px solid #1251A3;font-family:monospace">
+    <div class="ic-row"><span class="ic-l" style="color:#1251A3">孩子姓名</span><span class="ic-v">王大明（Quintus）</span><span class="ic-l" style="color:#1251A3">就讀班級</span><span class="ic-v">智優班 W6 · 快樂國中一年</span></div>
+    <div class="ic-row"><span class="ic-l" style="color:#1251A3">評量日期</span><span class="ic-v">2025 / 05 / 25</span><span class="ic-l" style="color:#1251A3">填寫日期</span><span class="ic-v">2025 / 05 / 25</span></div>
+    <div class="ic-row"><span class="ic-l" style="color:#1251A3">家長姓名</span><span class="ic-v">王聰明（爸爸）</span><span class="ic-l" style="color:#1251A3">聯絡電話</span><span class="ic-v">0912-___-___</span></div>
+    <div class="ic-row"><span class="ic-l" style="color:#1251A3">聯絡信箱</span><span class="ic-v" style="color:#1A5FBF">example@mail.com</span></div>
+  </div>
+
+    <div class="fc">
+      <div class="zy-kpi"><div class="v">3.55</div><div class="l">ASK 學生</div></div>
+      <div class="zy-kpi"><div class="v">3.58</div><div class="l">4C 學生</div></div>
+      <div class="zy-kpi"><div class="v">2.86</div><div class="l">覺知五力</div></div>
+      <div class="zy-kpi"><div class="v">2.81</div><div class="l">多元智能</div></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px">
+      <div class="iph zy-iz" style="flex:1;height:68px;border-radius:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1251A3" stroke-width="1.5" opacity="0.35"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#1251A3;font-family:monospace;font-size:9px">IMAGE ZONE #2</div></div>
+      <div class="iph zy-iz" style="flex:1;height:68px;border-radius:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1251A3" stroke-width="1.5" opacity="0.35"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#1251A3;font-family:monospace;font-size:9px">IMAGE ZONE #3</div></div>
+    </div>
+  </div>
+  <!-- ASK 保留分組長條 -->
+  <div class="zy-sec zy-sec-b">
+    <div class="zy-tt"><div class="dm"></div><div class="tx">二(一)　ASK 核心能力</div><div class="rl"></div><div class="eg">CORE COMPETENCY</div></div>
+    <div class="lgr"><span><span class="ld" style="background:#1251A3"></span>學生自評</span><span><span class="ld" style="background:#FF8C00"></span>家長評分</span></div>
+    <div class="ch220"><canvas id="zy_ask"></canvas></div>
+    <table class="stbl" style="margin-top:12px"><thead><tr style="background:linear-gradient(90deg,#1251A3,#1A5FBF);color:#fff"><th>向度</th><th>細項</th><th>學生</th><th>均值(學)</th><th>均值(家)</th></tr></thead><tbody>
+      <tr><td rowspan="3" style="font-weight:700;color:#1251A3">A 態度</td><td>自信</td><td>4.33</td><td rowspan="3" style="font-weight:900;color:#1251A3">3.89</td><td rowspan="3" style="font-weight:900;color:#FF8C00">4.33</td></tr><tr><td>自主</td><td>2.67</td></tr><tr><td>感恩</td><td>4.67</td></tr>
+      <tr style="background:#F5F8FF"><td rowspan="3" style="font-weight:700;color:#1251A3">S 技能</td><td>內在覺察</td><td>4.00</td><td rowspan="3" style="font-weight:900;color:#1251A3">3.44</td><td rowspan="3" style="font-weight:900;color:#FF8C00">4.22</td></tr><tr style="background:#F5F8FF"><td>外在覺察</td><td>3.33</td></tr><tr style="background:#F5F8FF"><td>自我調整</td><td>3.00</td></tr>
+      <tr><td rowspan="3" style="font-weight:700;color:#1251A3">K 知識</td><td>腦科學</td><td>4.00</td><td rowspan="3" style="font-weight:900;color:#1251A3">3.33</td><td rowspan="3" style="font-weight:900;color:#FF8C00">4.56</td></tr><tr><td>正向心理學</td><td>3.00</td></tr><tr><td>管理學</td><td>3.00</td></tr>
+    </tbody></table>
+  </div>
+  <!-- 4C → 雙層雷達 -->
+  <div class="zy-sec zy-sec-b">
+    <div class="zy-tt"><div class="dm"></div><div class="tx">二(二)　4C 素養力</div><div class="rl"></div><div class="eg">21ST CENTURY SKILLS ✦ RADAR</div></div>
+    <div class="lgr"><span><span class="ld" style="background:#1251A3"></span>學生自評</span><span><span class="ld" style="background:#FF8C00"></span>家長評分</span></div>
+    <div class="tc" style="align-items:start">
+      <div><div style="position:relative;height:260px"><canvas id="zy_4c"></canvas></div></div>
+      <div><table class="stbl"><thead><tr style="background:linear-gradient(90deg,#1251A3,#1A5FBF);color:#fff"><th>向度</th><th>學生</th><th>家長</th></tr></thead><tbody>
+        <tr><td style="font-weight:700;color:#1251A3">思辨力</td><td>2.00</td><td style="color:#FF8C00;font-weight:700">4.00</td></tr>
+        <tr style="background:#F5F8FF"><td style="font-weight:700;color:#1251A3">溝通力</td><td>3.33</td><td style="color:#FF8C00;font-weight:700">4.00</td></tr>
+        <tr><td style="font-weight:700;color:#1251A3">合作力</td><td>4.33</td><td style="color:#FF8C00;font-weight:700">4.33</td></tr>
+        <tr style="background:#F5F8FF"><td style="font-weight:700;color:#1251A3">創造力</td><td>4.67</td><td style="color:#FF8C00;font-weight:700">4.33</td></tr>
+      </tbody></table>
+      <div style="margin-top:12px;background:#EEF3FF;border-radius:6px;padding:10px;font-size:11px;color:#1251A3;line-height:1.7;font-family:monospace">▸ 思辨力差距最大 (+2.00)<br>▸ 創造力學生高於家長評</div>
+      </div>
+    </div>
+  </div>
+  <!-- 覺知五力 → 雙層雷達 -->
+  <div class="zy-sec zy-sec-b">
+    <div class="zy-tt"><div class="dm"></div><div class="tx">二(三)　覺知五力</div><div class="rl"></div><div class="eg">AWARENESS ✦ RADAR</div></div>
+    <div class="lgr"><span><span class="ld" style="background:#1251A3"></span>學生自評</span><span><span class="ld" style="background:#FF8C00"></span>家長評分</span></div>
+    <div class="tc" style="align-items:start">
+      <div><div style="position:relative;height:260px"><canvas id="zy_5s"></canvas></div></div>
+      <div><table class="stbl"><thead><tr style="background:linear-gradient(90deg,#1251A3,#1A5FBF);color:#fff"><th>覺知維度</th><th>學生</th><th>家長</th><th>差距</th></tr></thead><tbody>
+        <tr><td style="font-weight:700;color:#1251A3">覺察力</td><td>3.00</td><td style="color:#FF8C00;font-weight:700">4.44</td><td><span class="tag tw">+1.44</span></td></tr>
+        <tr style="background:#F5F8FF"><td style="font-weight:700;color:#1251A3">心智力</td><td>3.44</td><td style="color:#FF8C00;font-weight:700">4.44</td><td><span class="tag tw">+1.00</span></td></tr>
+        <tr><td style="font-weight:700;color:#1251A3">專注力</td><td>3.22</td><td style="color:#FF8C00;font-weight:700">4.33</td><td><span class="tag tw">+1.11</span></td></tr>
+        <tr style="background:#F5F8FF"><td style="font-weight:700;color:#1251A3">執行力</td><td>2.44</td><td style="color:#FF8C00;font-weight:700">4.11</td><td><span class="tag tw">+1.67</span></td></tr>
+        <tr><td style="font-weight:700;color:#1251A3">表達力</td><td>2.22</td><td style="color:#FF8C00;font-weight:700">4.33</td><td><span class="tag tw">+2.11</span></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+  <!-- 多元智能 保留分組長條 -->
+  <div class="zy-sec zy-sec-b">
+    <div class="zy-tt"><div class="dm"></div><div class="tx">三(一)　多元智能</div><div class="rl"></div><div class="eg">MULTIPLE INTELLIGENCES</div></div>
+    <div class="lgr"><span><span class="ld" style="background:#1251A3"></span>學生自評</span><span><span class="ld" style="background:#FF8C00"></span>家長評分</span></div>
+    <div class="ch240"><canvas id="zy_mi"></canvas></div>
+  </div>
+  <!-- RIASEC → 六角雷達 -->
+  <div class="zy-sec zy-sec-b">
+    <div class="zy-tt"><div class="dm"></div><div class="tx">三(二)　職業興趣傾向</div><div class="rl"></div><div class="eg">RIASEC HEXAGON ✦ RADAR</div></div>
+    <div class="lgr"><span><span class="ld" style="background:#1251A3"></span>學生自評</span><span><span class="ld" style="background:#FF8C00"></span>家長評分</span></div>
+    <div class="tc" style="align-items:start">
+      <div><div style="position:relative;height:280px"><canvas id="zy_ri"></canvas></div></div>
+      <div><table class="stbl"><thead><tr style="background:linear-gradient(90deg,#1251A3,#1A5FBF);color:#fff"><th>類型</th><th>代碼</th><th>學生</th><th>家長</th></tr></thead><tbody>
+        <tr><td style="font-weight:700;color:#1251A3">管理型</td><td style="font-family:monospace">E</td><td>3</td><td style="color:#FF8C00;font-weight:700">2</td></tr>
+        <tr style="background:#F5F8FF"><td style="font-weight:700;color:#1251A3">藝術型</td><td style="font-family:monospace">A</td><td>2</td><td style="color:#FF8C00;font-weight:700">4</td></tr>
+        <tr><td style="font-weight:700;color:#1251A3">研究型</td><td style="font-family:monospace">I</td><td>0</td><td style="color:#FF8C00;font-weight:700">5</td></tr>
+        <tr style="background:#F5F8FF"><td style="font-weight:700;color:#1251A3">常規型</td><td style="font-family:monospace">C</td><td>0</td><td style="color:#FF8C00;font-weight:700">1</td></tr>
+        <tr><td style="font-weight:700;color:#1251A3">社會型</td><td style="font-family:monospace">S</td><td>4</td><td style="color:#FF8C00;font-weight:700">3</td></tr>
+        <tr style="background:#F5F8FF"><td style="font-weight:700;color:#1251A3">現實型</td><td style="font-family:monospace">R</td><td>2</td><td style="color:#FF8C00;font-weight:700">5</td></tr>
+      </tbody></table>
+      <div style="margin-top:12px;background:#EEF3FF;border-radius:6px;padding:10px;font-size:11px;color:#1251A3;line-height:1.7;font-family:monospace">▸ 學生：社會型(S=4)最高<br>▸ 家長：研究/現實型並列最高</div>
+      </div>
+    </div>
+  </div>
+  <!-- 教養風格 → 四象限 -->
+  <div class="zy-sec zy-sec-b">
+    <div class="zy-tt"><div class="dm"></div><div class="tx">四　教養風格</div><div class="rl"></div><div class="eg">PARENTING STYLE ✦ QUADRANT</div></div>
+    <div class="tc" style="align-items:start">
+      <div><div class="slbl" style="text-align:center">要求 × 關懷 象限分布</div><div class="ch240"><canvas id="zy_pt"></canvas></div></div>
+      <div><table class="stbl" style="margin-top:8px"><thead><tr style="background:linear-gradient(90deg,#1251A3,#1A5FBF);color:#fff"><th>對象</th><th>要求</th><th>關懷</th><th>類型</th></tr></thead><tbody>
+        <tr><td style="font-weight:700;color:#555">媽媽（孩感）</td><td>3</td><td style="font-weight:700;color:#FF8C00">5</td><td style="font-size:11px;color:#2E7D32;font-weight:700">民主型</td></tr>
+        <tr style="background:#F5F8FF"><td style="font-weight:700;color:#555">爸爸（孩感）</td><td style="font-weight:700;color:#1251A3">5</td><td>4</td><td style="font-size:11px;color:#1565C0;font-weight:700">民主偏威</td></tr>
+        <tr><td style="font-weight:700;color:#555">爸爸（自評）</td><td>3</td><td style="font-weight:700;color:#FF8C00">5</td><td style="font-size:11px;color:#2E7D32;font-weight:700">民主型</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+  <div style="margin:10px;display:flex"><div class="iph zy-iz" style="flex:1;height:58px;border-radius:4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1251A3" stroke-width="1.5" opacity="0.35"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#1251A3;font-family:monospace;font-size:9px">IMAGE ZONE #4</div></div></div>
+  <div class="ftr" style="font-family:monospace">© 2026 TAIWAN ZHANWEI EDUCATION · INTELLIGENCE ASSESSMENT SYSTEM · CONFIDENTIAL</div>
+</div></div></div>
+<!-- ══ 開智班 ══ -->
+<div id="sec_kz" class="cls"><div class="report"><div class="kz-wrap">
+  <div class="kz-banner">
+    <div class="ds"><span>TAIWAN ZHANWEI EDUCATION</span><span>▸ COGNITIVE DEVELOPMENT ANALYTICS v3.1</span><span>DOC-KZ-2025-001 · REV.A</span></div>
+    <div class="bb">
+      <div class="av">💡</div>
+      <div style="flex:1;color:#D4EDDA">
+        <div class="org">台灣展威文化教育 TAIWAN ZHANWEI EDUCATION</div>
+        <div class="ttl" style="color:#fff">開智班兒童學習測評報告</div>
+        <div class="meta" style="font-family:monospace;font-size:11px"><span>■ 廖楷淯</span><span>■ 開智 1 班</span><span>■ 2025/04/24</span><span>■ 爸爸 廖彥偉</span></div>
+      </div>
+      <div class="iph kz-iz" style="width:80px;height:80px;border-radius:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B6E35" stroke-width="1.5" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#1B6E35">角色插圖</div></div>
+    </div>
+  </div>
+  <div class="kz-sec kz-sec-b" style="margin-top:12px">
+    <div class="kz-tt"><div class="dm"></div><div class="tx">一　評測概覽</div><div class="rl"></div><div class="eg">OVERVIEW</div></div>
+
+  <!-- 基本資料表 KZ -->
+  <div class="info-compact" style="border-left:3px solid #1B6E35;font-family:monospace">
+    <div class="ic-row"><span class="ic-l" style="color:#1B6E35">孩子姓名</span><span class="ic-v">廖楷淯</span><span class="ic-l" style="color:#1B6E35">就讀班級</span><span class="ic-v">開智 1 班</span></div>
+    <div class="ic-row"><span class="ic-l" style="color:#1B6E35">評量日期</span><span class="ic-v">2025 / 04 / 24</span><span class="ic-l" style="color:#1B6E35">填寫日期</span><span class="ic-v">2025 / 04 / 24</span></div>
+    <div class="ic-row"><span class="ic-l" style="color:#1B6E35">家長姓名</span><span class="ic-v">廖彥偉（爸爸）</span><span class="ic-l" style="color:#1B6E35">聯絡電話</span><span class="ic-v">0912-___-___</span></div>
+    <div class="ic-row"><span class="ic-l" style="color:#1B6E35">聯絡信箱</span><span class="ic-v" style="color:#239B4A">example@mail.com</span></div>
+  </div>
+
+    <div class="fc">
+      <div class="kz-kpi"><div class="v">4.17</div><div class="l">多元智能(孩子)</div></div>
+      <div class="kz-kpi"><div class="v">3.50</div><div class="l">4C 素養均值</div></div>
+      <div class="kz-kpi"><div class="v">3.22</div><div class="l">ASK 核心均值</div></div>
+      <div class="kz-kpi"><div class="v">4/5</div><div class="l">要求 / 支持</div></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px">
+      <div class="iph kz-iz" style="flex:1;height:68px;border-radius:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B6E35" stroke-width="1.5" opacity="0.35"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#1B6E35;font-family:monospace;font-size:9px">IMAGE ZONE #2</div></div>
+      <div class="iph kz-iz" style="flex:1;height:68px;border-radius:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B6E35" stroke-width="1.5" opacity="0.35"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#1B6E35;font-family:monospace;font-size:9px">IMAGE ZONE #3</div></div>
+    </div>
+  </div>
+  <!-- 多元智能 → 雷達+長條並列 -->
+  <div class="kz-sec kz-sec-b">
+    <div class="kz-tt"><div class="dm"></div><div class="tx">二　多元智能</div><div class="rl"></div><div class="eg">MULTIPLE INTELLIGENCES ✦ RADAR + BAR</div></div>
+    <div class="lgr"><span><span class="ld" style="background:#1B6E35"></span>孩子評</span><span><span class="ld" style="background:#FF8C00"></span>家長評</span></div>
+    <div class="tc" style="align-items:start">
+      <div><div class="slbl" style="text-align:center">八角雷達圖（整體輪廓）</div><div style="position:relative;height:260px"><canvas id="kz_rd"></canvas></div></div>
+      <div><div class="slbl" style="text-align:center">分組長條圖（細部比較）</div><div class="ch240"><canvas id="kz_mi"></canvas></div></div>
+    </div>
+    <table class="stbl" style="margin-top:10px"><thead><tr style="background:linear-gradient(90deg,#1B6E35,#239B4A);color:#fff"><th>評估者</th><th>語言</th><th>視覺</th><th>邏輯</th><th>音樂</th><th>肢體</th><th>內省</th><th>人際</th><th>自然</th></tr></thead><tbody>
+      <tr><td style="font-weight:700">孩子評</td><td>5.00</td><td>4.33</td><td>3.67</td><td>3.67</td><td>5.00</td><td>4.33</td><td>5.00</td><td>5.00</td></tr>
+      <tr style="background:#F2FAF5"><td style="font-weight:700">家長評</td><td>5.00</td><td>2.67</td><td>3.33</td><td>2.50</td><td>3.67</td><td>4.00</td><td>3.00</td><td>3.00</td></tr>
+    </tbody></table>
+  </div>
+  <!-- 4C → 四向雷達 -->
+  <div class="kz-sec kz-sec-b">
+    <div class="kz-tt"><div class="dm"></div><div class="tx">三　4C 素養力</div><div class="rl"></div><div class="eg">21ST CENTURY SKILLS ✦ RADAR</div></div>
+    <div class="tc" style="align-items:start">
+      <div><div style="position:relative;height:260px"><canvas id="kz_4c"></canvas></div></div>
+      <div><table class="stbl"><thead><tr style="background:linear-gradient(90deg,#1B6E35,#239B4A);color:#fff"><th>向度</th><th>均值</th><th>細項一</th><th>細項二</th><th>細項三</th></tr></thead><tbody>
+        <tr><td style="font-weight:700;color:#1B6E35">思辨力</td><td style="font-weight:900;color:#1B6E35">4.00</td><td>發現 4</td><td>分析 3</td><td>解決 3</td></tr>
+        <tr style="background:#F2FAF5"><td style="font-weight:700;color:#1B6E35">溝通力</td><td style="font-weight:900;color:#1B6E35">3.33</td><td>聆聽 3</td><td>表達 4</td><td>互動 3</td></tr>
+        <tr><td style="font-weight:700;color:#1B6E35">合作力</td><td style="font-weight:900;color:#1B6E35">3.00</td><td>領導 3</td><td>團隊 3</td><td>責任 3</td></tr>
+        <tr style="background:#F2FAF5"><td style="font-weight:700;color:#1B6E35">創造力</td><td style="font-weight:900;color:#1B6E35">3.67</td><td>創意 3</td><td>探索 5</td><td>造物 3</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+  <!-- ASK → 極座標面積圖 -->
+  <div class="kz-sec kz-sec-b">
+    <div class="kz-tt"><div class="dm"></div><div class="tx">四　ASK 核心能力</div><div class="rl"></div><div class="eg">ATTITUDE · SKILL · KNOWLEDGE ✦ POLAR</div></div>
+    <div class="tc" style="align-items:center">
+      <div><div class="slbl" style="text-align:center">極座標面積圖</div><div style="position:relative;height:240px"><canvas id="kz_ask"></canvas></div></div>
+      <div><table class="stbl"><thead><tr style="background:linear-gradient(90deg,#1B6E35,#239B4A);color:#fff"><th>向度</th><th>均值</th><th>細項一</th><th>細項二</th><th>細項三</th></tr></thead><tbody>
+        <tr><td style="font-weight:700;color:#1B6E35">A 態度</td><td style="font-weight:900;color:#1B6E35">3.11</td><td>自信 3</td><td>自主 4</td><td>感恩 2.33</td></tr>
+        <tr style="background:#F2FAF5"><td style="font-weight:700;color:#1B6E35">S 技能</td><td style="font-weight:900;color:#1B6E35">3.22</td><td>內在 3</td><td>外在 3.67</td><td>調整 3</td></tr>
+        <tr><td style="font-weight:700;color:#1B6E35">K 知識</td><td style="font-weight:900;color:#1B6E35">3.33</td><td>腦科 3</td><td>正心 4</td><td>管理 3</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+  <!-- 教養風格 → 四象限 -->
+  <div class="kz-sec kz-sec-b">
+    <div class="kz-tt"><div class="dm"></div><div class="tx">五　教養風格</div><div class="rl"></div><div class="eg">PARENTING STYLE ✦ QUADRANT</div></div>
+    <div class="tc">
+      <div><div class="slbl" style="text-align:center">要求 × 支持 象限定位</div><div class="ch220"><canvas id="kz_pt"></canvas></div></div>
+      <div style="padding:10px 6px">
+        <div style="margin-bottom:14px"><div style="font-size:10px;color:#888;font-family:monospace">對孩子的要求</div><div style="font-size:30px;font-weight:900;color:#1B6E35;font-family:monospace">4 <span style="font-size:12px;color:#aaa">/ 5</span></div><div class="sbg"><div class="sbf" style="width:80%;background:linear-gradient(90deg,#1B6E35,#239B4A)"></div></div></div>
+        <div><div style="font-size:10px;color:#888;font-family:monospace">對孩子的支持</div><div style="font-size:30px;font-weight:900;color:#0288D1;font-family:monospace">5 <span style="font-size:12px;color:#aaa">/ 5</span></div><div class="sbg"><div class="sbf" style="width:100%;background:linear-gradient(90deg,#0288D1,#29B6F6)"></div></div></div>
+        <div style="margin-top:16px;background:#E8F5E9;border-radius:8px;padding:10px 12px;border-left:4px solid #1B6E35">
+          <div style="font-size:10px;color:#aaa;font-family:monospace;margin-bottom:3px">教養類型判斷</div>
+          <div style="font-size:15px;font-weight:900;color:#1B6E35">民主型</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">高要求、高支持</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin:10px;display:flex"><div class="iph kz-iz" style="flex:1;height:58px;border-radius:4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B6E35" stroke-width="1.5" opacity="0.35"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="iph-l" style="color:#1B6E35;font-family:monospace;font-size:9px">IMAGE ZONE #4</div></div></div>
+  <div class="ftr" style="font-family:monospace">© 2026 TAIWAN ZHANWEI EDUCATION · COGNITIVE DEVELOPMENT ANALYTICS · CONFIDENTIAL</div>
+</div></div></div>
+<!-- ══ 對比模式 ══ -->
+<div id="sec_cmp" class="cls">
+<div class="cmp-header">
+  <h2>↔ 圖表改進前 / 改後 對比</h2>
+  <p>左側：改進前（原始圖表類型）　　右側：改進後（優化圖表類型）</p>
+</div>
+<div class="cmp-grid">
+
+  <!-- CMP 1: QM多元智能 -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag qm">🌟 啟蒙班</span>
+      <span class="section-name">多元智能</span>
+      <span class="change-pill">長條圖 → 八角雷達圖</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜長條圖</div>
+        <div style="position:relative;height:220px"><canvas id="co_qm_mi"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜八角雷達圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_qm_mi"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">八角雷達圖讓8項智能的「能力形狀」一目了然，可同時看出孩子整體強項（語言/肢體/人際）與相對弱項（音樂/自然）。</div>
+  </div>
+
+  <!-- CMP 2: QM教養風格 -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag qm">🌟 啟蒙班</span>
+      <span class="section-name">教養風格</span>
+      <span class="change-pill">長條圖 → 四象限散點圖</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜長條圖</div>
+        <div style="position:relative;height:220px"><canvas id="co_qm_pt"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜四象限散點圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_qm_pt"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">四象限圖（X=要求, Y=支持）直接呈現教養類型位置。一個點即定位「威權型（高要求/低支持）」，遠比兩根長條直觀有力。</div>
+  </div>
+
+  <!-- CMP 3: ZY 4C -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag zy">🔬 智優班</span>
+      <span class="section-name">4C 素養力</span>
+      <span class="change-pill">分組長條 → 雙層雷達圖</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜分組長條圖</div>
+        <div style="position:relative;height:220px"><canvas id="co_zy_4c"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜雙層雷達圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_zy_4c"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">雙層雷達讓學生評（藍）與家長評（橙）的「形狀差距」可視化。思辨力嚴重落差vs創造力超出家長期望，一眼就看出。</div>
+  </div>
+
+  <!-- CMP 4: ZY覺知五力 -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag zy">🔬 智優班</span>
+      <span class="section-name">覺知五力</span>
+      <span class="change-pill">分組長條 → 雙層雷達圖</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜分組長條圖</div>
+        <div style="position:relative;height:220px"><canvas id="co_zy_5s"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜雙層雷達圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_zy_5s"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">五力形成完整五邊形輪廓。家長評（橙）輪廓遠大於學生評（藍），清楚傳達「家長認為孩子表現遠比自我認知更好」。</div>
+  </div>
+
+  <!-- CMP 5: ZY RIASEC -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag zy">🔬 智優班</span>
+      <span class="section-name">職業興趣 RIASEC</span>
+      <span class="change-pill">分組長條 → 六角雷達圖（Holland Model）</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜分組長條圖</div>
+        <div style="position:relative;height:220px"><canvas id="co_zy_ri"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜六角雷達圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_zy_ri"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">RIASEC本身就是六角形理論模型，六角雷達圖是業界標準視覺化方式。學生偏S社會型，家長認為孩子適合I研究/R現實型，差距一目了然。</div>
+  </div>
+
+  <!-- CMP 6: ZY教養風格 -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag zy">🔬 智優班</span>
+      <span class="section-name">教養風格</span>
+      <span class="change-pill">長條圖 → 四象限散點圖</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜長條圖（6項）</div>
+        <div style="position:relative;height:220px"><canvas id="co_zy_pt"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜四象限散點圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_zy_pt"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">散點圖可同時展示三位評估者（媽媽孩感、爸爸孩感、爸爸自評）位置。三者皆落在民主型象限，但爸爸孩感偏高要求。</div>
+  </div>
+
+  <!-- CMP 7: KZ多元智能 -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag kz">💡 開智班</span>
+      <span class="section-name">多元智能</span>
+      <span class="change-pill">分組長條 → 八角雷達 + 長條並列</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜分組長條圖</div>
+        <div style="position:relative;height:220px"><canvas id="co_kz_mi"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜八角雷達圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_kz_mi"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">雷達圖清楚呈現孩子（綠）的八角輪廓飽滿，而家長評（橙）在視覺/音樂/人際維度明顯較低，輪廓差異極具視覺衝擊。</div>
+  </div>
+
+  <!-- CMP 8: KZ 4C -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag kz">💡 開智班</span>
+      <span class="section-name">4C 素養力</span>
+      <span class="change-pill">長條圖 → 四向雷達圖</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜長條圖</div>
+        <div style="position:relative;height:220px"><canvas id="co_kz_4c"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜四向雷達圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_kz_4c"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">四向雷達呈現「4C 輪廓」，思辨力明顯突出（4.0），合作力最弱（3.0），輪廓不均衡一眼可見。比長條圖更有整體感。</div>
+  </div>
+
+  <!-- CMP 9: KZ教養風格 -->
+  <div class="cmp-card">
+    <div class="cmp-card-head">
+      <span class="ctag kz">💡 開智班</span>
+      <span class="section-name">教養風格</span>
+      <span class="change-pill">長條圖 → 四象限散點圖</span>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-side">
+        <div class="cmp-side-label old">改進前｜長條圖</div>
+        <div style="position:relative;height:220px"><canvas id="co_kz_pt"></canvas></div>
+      </div>
+      <div class="cmp-side">
+        <div class="cmp-side-label new">✦ 改進後｜四象限散點圖</div>
+        <div style="position:relative;height:220px"><canvas id="cn_kz_pt"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-note">要求=4、支持=5，落在第一象限（民主型）的右上方，清楚傳達廖爸爸偏「高支持」的民主教養風格。</div>
+  </div>
+
+</div><!-- cmp-grid -->
+</div><!-- sec_cmp -->
+
+
+<!-- ═══ 列印浮動按鈕 ═══════════════════════════════════ -->
+<div class="print-fab">
+  <button class="btn-print" onclick="openPrintModal()">🖨 列印 / 存為 PDF</button>
+</div>
+
+<!-- 列印選擇 Modal -->
+<div class="print-modal-bg" id="printModal">
+  <div class="print-modal">
+    <h3>選擇要列印的報告</h3>
+    <label class="pm-row"><input type="checkbox" id="pck_qm" checked><span>🌟 啟蒙班　林禹希</span></label>
+    <label class="pm-row"><input type="checkbox" id="pck_zy" checked><span>🔬 智優班　王大明</span></label>
+    <label class="pm-row"><input type="checkbox" id="pck_kz" checked><span>💡 開智班　廖楷淯</span></label>
+    <div class="pm-actions">
+      <button class="pm-cancel" onclick="closePrintModal()">取消</button>
+      <button class="pm-ok" onclick="confirmPrint()">確認列印</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* ─── Quadrant plugin ──────────────────────────────────────── */
+const quadrantPlugin = {
+  id:'quadrant',
+  afterDraw(chart){
+    if(!chart.config.options._quadrant) return;
+    const {ctx,chartArea:{left,right,top,bottom},scales:{x,y}}=chart;
+    const mx=x.getPixelForValue(2.5), my=y.getPixelForValue(2.5);
+    ctx.save();
+    ctx.strokeStyle='rgba(150,150,150,0.4)';
+    ctx.lineWidth=1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(mx,top); ctx.lineTo(mx,bottom); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(left,my); ctx.lineTo(right,my); ctx.stroke();
+    ctx.setLineDash([]);
+    const labels=[
+      {t:'民主型',x:right-10,y:top+18,c:'#2E7D32'},
+      {t:'威權型',x:mx+6,y:top+18,c:'#B71C1C'},
+      {t:'放任型',x:right-10,y:bottom-6,c:'#E65100'},
+      {t:'忽視型',x:mx+6,y:bottom-6,c:'#455A64'}
+    ];
+    ctx.font='bold 10px monospace';
+    labels.forEach(l=>{
+      ctx.textAlign=(l.x>mx+50)?'right':'left';
+      ctx.fillStyle=l.c+'55';
+      ctx.fillText(l.t,l.x,l.y);
+    });
+    ctx.restore();
+  }
+};
+Chart.register(quadrantPlugin);
+
+/* ─── Shared palette ─────────────────────────────────────────── */
+// 從 config.js 取色；config.js 未載入時（file:// 限制等）自動 fallback
+function _rgba(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+const _c = (typeof ZW !== 'undefined') ? ZW.color : { zy:'#1251A3', qm:'#FF8C00', kz:'#1B6E35' };
+const C_ZY=_rgba(_c.zy,0.82), C_ZYf=_rgba(_c.zy,0.15);
+const C_OR=_rgba(_c.qm,0.82), C_ORf=_rgba(_c.qm,0.15);
+const C_GR=_rgba(_c.kz,0.82), C_GRf=_rgba(_c.kz,0.15);
+const C_RD='rgba(239,71,111,0.82)', C_RDf='rgba(239,71,111,0.15)';
+const MI8=['語言','視覺','邏輯','音樂','肢體','內省','人際','自然'];
+
+/* ─── Default radar / bar options ──────────────────────────── */
+function radarOpts(max,step){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    scales:{r:{min:0,max:max,ticks:{stepSize:step,font:{size:9}},
+      pointLabels:{font:{size:10,weight:'bold'}},
+      grid:{color:'rgba(0,0,0,0.08)'},angleLines:{color:'rgba(0,0,0,0.1)'}}},
+    plugins:{legend:{display:false}}
+  };
+}
+function barOpts(xMax){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    indexAxis:'y',
+    scales:{x:{min:0,max:xMax,ticks:{font:{size:9}}},y:{ticks:{font:{size:10}}}},
+    plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}
+  };
+}
+function radarDual(max){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    scales:{r:{min:0,max:max,ticks:{stepSize:1,font:{size:9}},
+      pointLabels:{font:{size:11,weight:'bold'}},
+      grid:{color:'rgba(0,0,0,0.08)'},angleLines:{color:'rgba(0,0,0,0.1)'}}},
+    plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}
+  };
+}
+
+/* ─── Gauge helper ─────────────────────────────────────────── */
+function makeGauge(id, score, color){
+  const max=5, fill=score, empty=max-fill, bg=max;
+  new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{datasets:[{data:[fill,empty],
+      backgroundColor:[color,'rgba(220,220,220,0.25)'],
+      borderWidth:0,circumference:180,rotation:-90,cutout:'72%'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}
+  });
+}
+
+/* ─── Scatter helper ───────────────────────────────────────── */
+function makeScatter(id, points, colors, labels){
+  new Chart(document.getElementById(id),{
+    type:'scatter',
+    data:{datasets: points.map((p,i)=>({
+      label:labels[i], data:[{x:p[0],y:p[1]}],
+      backgroundColor:colors[i], borderColor:colors[i],
+      pointRadius:9, pointHoverRadius:11
+    }))},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      _quadrant:true,
+      scales:{
+        x:{min:0,max:5,title:{display:true,text:'要求',font:{size:10}},ticks:{font:{size:9}}},
+        y:{min:0,max:5,title:{display:true,text:'支持 / 關懷',font:{size:10}},ticks:{font:{size:9}}}
+      },
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}},tooltip:{callbacks:{label:c=>`${c.dataset.label} (${c.raw.x},${c.raw.y})`}}}
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   initQM — 啟蒙班
+══════════════════════════════════════════════════════════════ */
+function initQM(){
+  /* 大腦 doughnut x2 */
+  new Chart(document.getElementById('qm_bp'),{type:'doughnut',
+    data:{labels:['右腦','左腦'],datasets:[{data:[80,20],backgroundColor:['#FF8C00','#0288D1'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}});
+  new Chart(document.getElementById('qm_bc'),{type:'doughnut',
+    data:{labels:['右腦','左腦'],datasets:[{data:[60,40],backgroundColor:['#EF476F','#118AB2'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}});
+
+  /* 大腦五力 radar */
+  new Chart(document.getElementById('qm_rd'),{type:'radar',
+    data:{labels:['感知力','專注力','理解力','創造力','統合力'],
+      datasets:[{label:'家長評',data:[4.00,4.00,4.33,4.33,4.17],
+        backgroundColor:C_ORf, borderColor:C_OR, pointBackgroundColor:C_OR,
+        borderWidth:2, pointRadius:4}]},
+    options:radarOpts(5,1)});
+
+  /* 多元智能 八角雷達 */
+  new Chart(document.getElementById('qm_mi'),{type:'radar',
+    data:{labels:MI8,
+      datasets:[{label:'家長評',data:[5.00,4.67,5.00,4.33,5.00,5.00,5.00,4.33],
+        backgroundColor:C_ORf, borderColor:C_OR, pointBackgroundColor:C_OR,
+        borderWidth:2, pointRadius:4}]},
+    options:radarOpts(5,1)});
+
+  /* 教養 四象限 */
+  makeScatter('qm_pt',[[5,3]],[C_OR],['家長教養']);
+
+  /* 關係/環境 gauges */
+  makeGauge('qm_g1', 5, '#FF8C00');
+  makeGauge('qm_g2', 5, '#FF8C00');
+  makeGauge('qm_g3', 5, '#06D6A0');
+  makeGauge('qm_g4', 5, '#118AB2');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   initZY — 智優班
+══════════════════════════════════════════════════════════════ */
+function initZY(){
+  /* ASK 分組長條 */
+  new Chart(document.getElementById('zy_ask'),{type:'bar',
+    data:{labels:['A 態度','S 技能','K 知識'],
+      datasets:[
+        {label:'學生自評',data:[3.89,3.44,3.33],backgroundColor:C_ZY,borderRadius:5},
+        {label:'家長評分',data:[4.33,4.22,4.56],backgroundColor:C_OR,borderRadius:5}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:10}}},y:{min:0,max:5,ticks:{font:{size:9}}}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}}});
+
+  /* 4C 雙層雷達 */
+  new Chart(document.getElementById('zy_4c'),{type:'radar',
+    data:{labels:['思辨力','溝通力','合作力','創造力'],
+      datasets:[
+        {label:'學生自評',data:[2.00,3.33,4.33,4.67],backgroundColor:C_ZYf,borderColor:C_ZY,pointBackgroundColor:C_ZY,borderWidth:2,pointRadius:4},
+        {label:'家長評分',data:[4.00,4.00,4.33,4.33],backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}
+      ]},
+    options:radarDual(5)});
+
+  /* 覺知五力 雙層雷達 */
+  new Chart(document.getElementById('zy_5s'),{type:'radar',
+    data:{labels:['覺察力','心智力','專注力','執行力','表達力'],
+      datasets:[
+        {label:'學生自評',data:[3.00,3.44,3.22,2.44,2.22],backgroundColor:C_ZYf,borderColor:C_ZY,pointBackgroundColor:C_ZY,borderWidth:2,pointRadius:4},
+        {label:'家長評分',data:[4.44,4.44,4.33,4.11,4.33],backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}
+      ]},
+    options:radarDual(5)});
+
+  /* 多元智能 分組長條 */
+  new Chart(document.getElementById('zy_mi'),{type:'bar',
+    data:{labels:MI8,
+      datasets:[
+        {label:'學生自評',data:[3.00,2.75,3.00,3.00,3.00,2.25,2.75,2.75],backgroundColor:C_ZY,borderRadius:4},
+        {label:'家長評分',data:[4.50,4.50,3.75,4.50,4.00,4.25,4.00,4.25],backgroundColor:C_OR,borderRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:9}}},y:{min:0,max:5,ticks:{font:{size:9}}}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}}});
+
+  /* RIASEC 六角雷達 */
+  new Chart(document.getElementById('zy_ri'),{type:'radar',
+    data:{labels:['E 管理型','A 藝術型','I 研究型','C 常規型','S 社會型','R 現實型'],
+      datasets:[
+        {label:'學生自評',data:[3,2,0,0,4,2],backgroundColor:C_ZYf,borderColor:C_ZY,pointBackgroundColor:C_ZY,borderWidth:2,pointRadius:4},
+        {label:'家長評分',data:[2,4,5,1,3,5],backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:9}},
+        pointLabels:{font:{size:10,weight:'bold'}},
+        grid:{color:'rgba(0,0,0,0.08)'},angleLines:{color:'rgba(0,0,0,0.1)'}}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}}});
+
+  /* 教養風格 四象限 */
+  makeScatter('zy_pt',
+    [[3,5],[5,4],[3,5]],
+    ['#2E7D32','#1251A3','#FF8C00'],
+    ['媽媽（孩感）','爸爸（孩感）','爸爸（自評）']);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   initKZ — 開智班
+══════════════════════════════════════════════════════════════ */
+function initKZ(){
+  /* 多元智能 八角雷達 */
+  new Chart(document.getElementById('kz_rd'),{type:'radar',
+    data:{labels:MI8,
+      datasets:[
+        {label:'孩子評',data:[5.00,4.33,3.67,3.67,5.00,4.33,5.00,5.00],backgroundColor:C_GRf,borderColor:C_GR,pointBackgroundColor:C_GR,borderWidth:2,pointRadius:4},
+        {label:'家長評',data:[5.00,2.67,3.33,2.50,3.67,4.00,3.00,3.00],backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}
+      ]},
+    options:radarDual(5)});
+
+  /* 多元智能 分組長條 */
+  new Chart(document.getElementById('kz_mi'),{type:'bar',
+    data:{labels:MI8,
+      datasets:[
+        {label:'孩子評',data:[5.00,4.33,3.67,3.67,5.00,4.33,5.00,5.00],backgroundColor:C_GR,borderRadius:4},
+        {label:'家長評',data:[5.00,2.67,3.33,2.50,3.67,4.00,3.00,3.00],backgroundColor:C_OR,borderRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:9}}},y:{min:0,max:5,ticks:{font:{size:9}}}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}}});
+
+  /* 4C 四向雷達 */
+  new Chart(document.getElementById('kz_4c'),{type:'radar',
+    data:{labels:['思辨力','溝通力','合作力','創造力'],
+      datasets:[{label:'4C均值',data:[4.00,3.33,3.00,3.67],
+        backgroundColor:C_GRf, borderColor:C_GR, pointBackgroundColor:C_GR,
+        borderWidth:2, pointRadius:4}]},
+    options:radarOpts(5,1)});
+
+  /* ASK 極座標面積 */
+  new Chart(document.getElementById('kz_ask'),{type:'polarArea',
+    data:{labels:['A 態度','S 技能','K 知識'],
+      datasets:[{data:[3.11,3.22,3.33],
+        backgroundColor:['rgba(27,110,53,0.55)','rgba(255,140,0,0.55)','rgba(18,81,163,0.55)'],
+        borderColor:['#1B6E35','#FF8C00','#1251A3'], borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:9}}}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}}});
+
+  /* 教養 四象限 */
+  makeScatter('kz_pt',[[4,5]],[C_GR],['廖爸爸']);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   initCMP — 比較頁 (9 old + 9 new)
+══════════════════════════════════════════════════════════════ */
+function initCMP(){
+  /* ── OLD charts ─── */
+  /* co_qm_mi: 長條 多元智能 */
+  new Chart(document.getElementById('co_qm_mi'),{type:'bar',
+    data:{labels:MI8,
+      datasets:[{label:'家長評',data:[5.00,4.67,5.00,4.33,5.00,5.00,5.00,4.33],backgroundColor:C_OR,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:8}}},y:{min:0,max:5}},plugins:{legend:{display:false}}}});
+
+  /* co_qm_pt: 長條 教養 */
+  new Chart(document.getElementById('co_qm_pt'),{type:'bar',
+    data:{labels:['要求','支持'],
+      datasets:[{label:'家長',data:[5,3],backgroundColor:[C_OR,C_ZY],borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      scales:{x:{min:0,max:5}},plugins:{legend:{display:false}}}});
+
+  /* co_zy_4c: 分組長條 4C */
+  new Chart(document.getElementById('co_zy_4c'),{type:'bar',
+    data:{labels:['思辨力','溝通力','合作力','創造力'],
+      datasets:[
+        {label:'學生',data:[2.00,3.33,4.33,4.67],backgroundColor:C_ZY,borderRadius:4},
+        {label:'家長',data:[4.00,4.00,4.33,4.33],backgroundColor:C_OR,borderRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:8}}},y:{min:0,max:5}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}});
+
+  /* co_zy_5s: 分組長條 覺知五力 */
+  new Chart(document.getElementById('co_zy_5s'),{type:'bar',
+    data:{labels:['覺察力','心智力','專注力','執行力','表達力'],
+      datasets:[
+        {label:'學生',data:[3.00,3.44,3.22,2.44,2.22],backgroundColor:C_ZY,borderRadius:4},
+        {label:'家長',data:[4.44,4.44,4.33,4.11,4.33],backgroundColor:C_OR,borderRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:8}}},y:{min:0,max:5}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}});
+
+  /* co_zy_ri: 分組長條 RIASEC */
+  new Chart(document.getElementById('co_zy_ri'),{type:'bar',
+    data:{labels:['E管理','A藝術','I研究','C常規','S社會','R現實'],
+      datasets:[
+        {label:'學生',data:[3,2,0,0,4,2],backgroundColor:C_ZY,borderRadius:4},
+        {label:'家長',data:[2,4,5,1,3,5],backgroundColor:C_OR,borderRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:8}}},y:{min:0,max:5}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}});
+
+  /* co_zy_pt: 長條 教養 */
+  new Chart(document.getElementById('co_zy_pt'),{type:'bar',
+    data:{labels:['媽媽要求','媽媽關懷','爸爸要求','爸爸關懷'],
+      datasets:[{label:'分數',data:[3,5,5,4],backgroundColor:[C_ZY,C_OR,C_ZY,C_OR],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      scales:{x:{min:0,max:5}},plugins:{legend:{display:false}}}});
+
+  /* co_kz_mi: 分組長條 多元智能 */
+  new Chart(document.getElementById('co_kz_mi'),{type:'bar',
+    data:{labels:MI8,
+      datasets:[
+        {label:'孩子',data:[5.00,4.33,3.67,3.67,5.00,4.33,5.00,5.00],backgroundColor:C_GR,borderRadius:4},
+        {label:'家長',data:[5.00,2.67,3.33,2.50,3.67,4.00,3.00,3.00],backgroundColor:C_OR,borderRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:8}}},y:{min:0,max:5}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}});
+
+  /* co_kz_4c: 長條 4C */
+  new Chart(document.getElementById('co_kz_4c'),{type:'bar',
+    data:{labels:['思辨力','溝通力','合作力','創造力'],
+      datasets:[{label:'均值',data:[4.00,3.33,3.00,3.67],backgroundColor:C_GR,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:8}}},y:{min:0,max:5}},plugins:{legend:{display:false}}}});
+
+  /* co_kz_pt: 長條 教養 */
+  new Chart(document.getElementById('co_kz_pt'),{type:'bar',
+    data:{labels:['要求','支持'],
+      datasets:[{label:'廖爸爸',data:[4,5],backgroundColor:[C_GR,C_ZY],borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      scales:{x:{min:0,max:5}},plugins:{legend:{display:false}}}});
+
+  /* ── NEW charts ─── */
+  /* cn_qm_mi: 八角雷達 */
+  new Chart(document.getElementById('cn_qm_mi'),{type:'radar',
+    data:{labels:MI8,
+      datasets:[{label:'家長評',data:[5.00,4.67,5.00,4.33,5.00,5.00,5.00,4.33],
+        backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}]},
+    options:radarOpts(5,1)});
+
+  /* cn_qm_pt: 四象限散點 */
+  makeScatter('cn_qm_pt',[[5,3]],[C_OR],['家長教養']);
+
+  /* cn_zy_4c: 雙層雷達 4C */
+  new Chart(document.getElementById('cn_zy_4c'),{type:'radar',
+    data:{labels:['思辨力','溝通力','合作力','創造力'],
+      datasets:[
+        {label:'學生',data:[2.00,3.33,4.33,4.67],backgroundColor:C_ZYf,borderColor:C_ZY,pointBackgroundColor:C_ZY,borderWidth:2,pointRadius:4},
+        {label:'家長',data:[4.00,4.00,4.33,4.33],backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}
+      ]},
+    options:radarDual(5)});
+
+  /* cn_zy_5s: 雙層雷達 覺知五力 */
+  new Chart(document.getElementById('cn_zy_5s'),{type:'radar',
+    data:{labels:['覺察力','心智力','專注力','執行力','表達力'],
+      datasets:[
+        {label:'學生',data:[3.00,3.44,3.22,2.44,2.22],backgroundColor:C_ZYf,borderColor:C_ZY,pointBackgroundColor:C_ZY,borderWidth:2,pointRadius:4},
+        {label:'家長',data:[4.44,4.44,4.33,4.11,4.33],backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}
+      ]},
+    options:radarDual(5)});
+
+  /* cn_zy_ri: 六角雷達 RIASEC */
+  new Chart(document.getElementById('cn_zy_ri'),{type:'radar',
+    data:{labels:['E 管理型','A 藝術型','I 研究型','C 常規型','S 社會型','R 現實型'],
+      datasets:[
+        {label:'學生',data:[3,2,0,0,4,2],backgroundColor:C_ZYf,borderColor:C_ZY,pointBackgroundColor:C_ZY,borderWidth:2,pointRadius:4},
+        {label:'家長',data:[2,4,5,1,3,5],backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}
+      ]},
+    options:radarDual(5)});
+
+  /* cn_zy_pt: 四象限散點 教養 */
+  makeScatter('cn_zy_pt',
+    [[3,5],[5,4],[3,5]],
+    ['#2E7D32','#1251A3','#FF8C00'],
+    ['媽媽（孩感）','爸爸（孩感）','爸爸（自評）']);
+
+  /* cn_kz_mi: 八角雷達 */
+  new Chart(document.getElementById('cn_kz_mi'),{type:'radar',
+    data:{labels:MI8,
+      datasets:[
+        {label:'孩子',data:[5.00,4.33,3.67,3.67,5.00,4.33,5.00,5.00],backgroundColor:C_GRf,borderColor:C_GR,pointBackgroundColor:C_GR,borderWidth:2,pointRadius:4},
+        {label:'家長',data:[5.00,2.67,3.33,2.50,3.67,4.00,3.00,3.00],backgroundColor:C_ORf,borderColor:C_OR,pointBackgroundColor:C_OR,borderWidth:2,pointRadius:4}
+      ]},
+    options:radarDual(5)});
+
+  /* cn_kz_4c: 四向雷達 */
+  new Chart(document.getElementById('cn_kz_4c'),{type:'radar',
+    data:{labels:['思辨力','溝通力','合作力','創造力'],
+      datasets:[{label:'4C均值',data:[4.00,3.33,3.00,3.67],
+        backgroundColor:C_GRf,borderColor:C_GR,pointBackgroundColor:C_GR,borderWidth:2,pointRadius:4}]},
+    options:radarOpts(5,1)});
+
+  /* cn_kz_pt: 四象限散點 */
+  makeScatter('cn_kz_pt',[[4,5]],[C_GR],['廖爸爸']);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Tab switching
+══════════════════════════════════════════════════════════════ */
+const inited={qm:false,zy:false,kz:false,cmp:false};
+
+function initCharts(cls){
+  if(cls==='qm' && !inited.qm){ initQM(); inited.qm=true; }
+  if(cls==='zy' && !inited.zy){ initZY(); inited.zy=true; }
+  if(cls==='kz' && !inited.kz){ initKZ(); inited.kz=true; }
+  if(cls==='cmp'&& !inited.cmp){ initCMP();inited.cmp=true;}
+}
+
+function sw(cls){
+  document.querySelectorAll('.cls').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec_'+cls).classList.add('active');
+  document.querySelector('.tab-btn.'+cls).classList.add('active');
+  initCharts(cls);
+}
+
+/* ── 列印功能 ─────────────────────────────────────────── */
+function openPrintModal(){ document.getElementById('printModal').classList.add('open'); }
+function closePrintModal(){ document.getElementById('printModal').classList.remove('open'); }
+
+function confirmPrint(){
+  closePrintModal();
+  const sel = {
+    qm: document.getElementById('pck_qm').checked,
+    zy: document.getElementById('pck_zy').checked,
+    kz: document.getElementById('pck_kz').checked
+  };
+  if(!sel.qm && !sel.zy && !sel.kz){ alert('請至少勾選一個班級'); return; }
+
+  // 確保選到的班圖表已初始化
+  if(sel.qm && !inited.qm){ initQM(); inited.qm=true; }
+  if(sel.zy && !inited.zy){ initZY(); inited.zy=true; }
+  if(sel.kz && !inited.kz){ initKZ(); inited.kz=true; }
+
+  // 標記要列印的 section
+  ['qm','zy','kz'].forEach(c=>{
+    const el = document.getElementById('sec_'+c);
+    if(!el) return;
+    el.classList.toggle('print-target', !!sel[c]);
+    // 如果有多個班要印，第二個開始加分頁線
+  });
+
+  // 在各 section 間插入分頁 (只做一次)
+  document.querySelectorAll('.print-page-break').forEach(e=>e.remove());
+  const targets = ['qm','zy','kz'].filter(c=>sel[c]);
+  targets.slice(1).forEach(c=>{
+    const el = document.getElementById('sec_'+c);
+    if(el){ const pb=document.createElement('div'); pb.className='print-page-break'; el.parentNode.insertBefore(pb,el); }
+  });
+
+  setTimeout(()=>{ window.print(); }, 200);
+}
+
+/* Auto-init first tab */
+initCharts('qm');
+
+/* ════════════════════════════════════════════════════════════════
+   ★ 動態資料覆蓋層 — 從 localStorage.report_record 讀取真實學員紀錄
+   並覆蓋 banner、統計卡，自動切到該班別 tab，移除其他班別
+════════════════════════════════════════════════════════════════ */
+(function(){
+  let rec=null;
+  try{ rec=JSON.parse(localStorage.getItem('report_record')||'null'); }catch(e){}
+  if(!rec || !rec.class) return;
+
+  const ZWCfg={
+    qm_parent:  ['', '左右腦',   '大腦五力', '多元智能', '教養風格', '關係&環境'],
+    zy_student: ['', 'ASK',      '4C',       '覺知五力', '多元智能', 'RIASEC'],
+    zy_parent:  ['', 'ASK',      '4C',       '覺知五力', '多元智能', 'RIASEC',  '教養風格'],
+    kz_student: ['', '多元智能', '4C',       'ASK'],
+    kz_parent:  ['', '多元智能', '4C',       'ASK',      '教養風格'],
+  };
+  const qKey=rec.qKey||(rec.class+'_'+(rec.role||'parent'));
+  const labels=ZWCfg[qKey]||[];
+  const dims=[];
+  for(let s=1;s<labels.length;s++){
+    const vals=[]; for(let q=0;q<50;q++){
+      const v=rec[qKey+'_s'+s+'_q'+q]; if(v===undefined) break; vals.push(Number(v));
+    }
+    if(vals.length){
+      const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+      dims.push({label:labels[s], avg:Math.round(avg*100)/100, count:vals.length, vals:vals});
+    }
+  }
+
+  function fmtDate(d){ if(!d) return '—'; return String(d).replace(/-/g,'/').slice(0,10); }
+  const clsLabel={qm:'啟蒙班',kz:'開智班',zy:'智優班'}[rec.class]||'';
+  const roleLabel={student:'學生自填',parent:'家長填寫'}[rec.role]||'';
+  const colorMain={qm:'#FF8C00',zy:'#1251A3',kz:'#1B6E35'}[rec.class]||'#555';
+  const colorBg={qm:'#FFF8EE',zy:'#EEF3FF',kz:'#EDF8F1'}[rec.class]||'#fff';
+
+  // 切到對應班別（若有 sw 函式）
+  if(typeof sw==='function'){ try{ sw(rec.class); }catch(e){} }
+
+  // 隱藏整個 top-nav（鎖定該班別）
+  const nav=document.querySelector('.top-nav');
+  if(nav) nav.style.display='none';
+
+  // 把其他 .cls section 從 DOM 移除（含 sec_cmp）
+  document.querySelectorAll('.cls').forEach(function(sec){
+    if(sec.id!=='sec_'+rec.class){
+      sec.parentNode && sec.parentNode.removeChild(sec);
+    } else {
+      sec.classList.add('active');
+      sec.style.display='block';
+    }
+  });
+
+  // 在 #app 頂部加 live banner
+  const app=document.getElementById('app');
+  if(app){
+    const note=document.createElement('div');
+    note.style.cssText='margin-bottom:14px;padding:10px 16px;background:#1F2937;color:#FFD600;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap';
+    note.innerHTML='<span>🔴 即時資料：'+(rec.name||'')+' · '+clsLabel+' · '+roleLabel+
+      ' · 共 '+dims.length+' 維度／'+dims.reduce(function(s,d){return s+d.count;},0)+' 題</span>'+
+      '<button onclick="localStorage.removeItem(\'report_record\');location.reload()" style="background:#FFD600;color:#000;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">清除動態資料</button>';
+    app.insertBefore(note, app.firstChild);
+  }
+
+  // 覆蓋 banner（依班別 .qm-banner / .zy-banner / .kz-banner）
+  const banner=document.querySelector('.'+rec.class+'-banner');
+  if(banner){
+    const meta=banner.querySelector('.meta');
+    if(meta){
+      meta.innerHTML=
+        '<span>👤 '+(rec.name||'—')+'</span>'+
+        '<span>🏫 '+(rec.class_name||'—')+'</span>'+
+        '<span>📆 '+fmtDate(rec.eval_date||rec.fill_date||rec.timestamp)+'</span>'+
+        (rec.parent_name?'<span>👪 '+rec.parent_name+'</span>':'');
+    }
+  }
+
+  // 覆蓋 highlight 卡片（.qm-hl / .zy-hl / .kz-hl 內的 .v / .l）
+  const hlCards=document.querySelectorAll('.'+rec.class+'-hl');
+  if(hlCards.length && dims.length){
+    hlCards.forEach(function(card,i){
+      const dim=dims[i]; if(!dim) return;
+      const vEl=card.querySelector('.v');
+      const lEl=card.querySelector('.l');
+      if(vEl){ vEl.textContent=dim.avg.toFixed(2); vEl.style.fontSize='24px'; }
+      if(lEl){ lEl.textContent=dim.label+' 均值'; }
+    });
+  }
+
+  // 在班別區塊頂部插入 live 維度卡片區
+  const sec=document.getElementById('sec_'+rec.class);
+  if(sec && dims.length){
+    const dynBlock=document.createElement('div');
+    dynBlock.style.cssText='background:#fff;border-radius:14px;padding:18px 20px;margin:0 0 14px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-left:5px solid '+colorMain;
+    dynBlock.innerHTML='<div style="font-weight:900;font-size:14px;color:'+colorMain+';margin-bottom:14px">📊 本筆紀錄各維度均分（live）</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'+
+      dims.map(function(d){
+        return '<div style="background:'+colorBg+';border-radius:10px;padding:10px 12px">'+
+          '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="font-weight:700">'+d.label+'</span><span style="color:'+colorMain+';font-weight:900">'+d.avg.toFixed(2)+' / 5</span></div>'+
+          '<div style="height:7px;background:#fff;border-radius:4px;overflow:hidden"><div style="width:'+(d.avg/5*100)+'%;height:100%;background:'+colorMain+'"></div></div>'+
+          '<div style="font-size:10px;color:#888;margin-top:4px">'+d.count+' 題</div>'+
+        '</div>';
+      }).join('')+
+      '</div>';
+    sec.insertBefore(dynBlock, sec.firstChild);
+  }
+})();
+
+</script>
+</body>
+</html>
