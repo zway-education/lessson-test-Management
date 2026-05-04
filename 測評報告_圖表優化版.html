@@ -760,10 +760,7 @@ img,canvas,svg,video{max-width:100%;height:auto}
 </div><!-- sec_cmp -->
 
 
-<!-- ═══ 列印浮動按鈕（直接列印當前測驗者，不再跳選擇 Modal） ═══ -->
-<div class="print-fab">
-  <button class="btn-print" onclick="directPrint()">🖨 列印 / 存為 PDF</button>
-</div>
+<!-- 列印按鈕已移除（PDF 由後端 sendReportEmail 產生並寄至家長信箱） -->
 
 </div><!-- app -->
 
@@ -1320,28 +1317,29 @@ initCharts('qm');
   const nav = document.querySelector('.top-nav');
   if(nav) nav.style.display='none';
 
-  // 把其他 .cls section 從 DOM 移除（保留 sec_cmp 才有交叉對比；若沒有雙方則一併移除 sec_cmp）
+  // 把其他 .cls section 從 DOM 移除（包含 sec_cmp，因為它含 demo 對比卡且 top-nav 已隱藏）
+  // 真實雙方交叉分析會由下方的 dynBlock 直接呈現
   document.querySelectorAll('.cls').forEach(function(sec){
-    const keep = sec.id === 'sec_'+cls || (hasBoth && sec.id === 'sec_cmp');
-    if(!keep){
+    if(sec.id !== 'sec_'+cls){
       sec.parentNode && sec.parentNode.removeChild(sec);
-    } else if(sec.id === 'sec_'+cls){
+    } else {
       sec.classList.add('active');
       sec.style.display = 'block';
     }
   });
 
-  // 在 #app 頂部加 live banner
+  // 在 #app 頂部加狀態 banner（家長端友善版）
   const app = document.getElementById('app');
   if(app){
     const note = document.createElement('div');
-    note.style.cssText = 'margin-bottom:14px;padding:10px 16px;background:#1F2937;color:#FFD600;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap';
-    const stateTxt = hasBoth
-      ? '🟢 雙方完成：學生 ✓ 家長 ✓'
-      : (recStudent ? '🟡 僅學生填寫（家長尚未完成）' : '🟡 僅家長填寫（學生尚未完成）');
-    note.innerHTML =
-      '<span>🔴 即時資料：'+(primary.name||'')+' · '+clsLabel+' · '+stateTxt+'</span>'+
-      '<button onclick="localStorage.removeItem(\'report_record\');location.href=location.pathname" style="background:#FFD600;color:#000;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">清除動態資料</button>';
+    const isOk = hasBoth;
+    note.style.cssText = 'margin-bottom:14px;padding:10px 16px;border-radius:10px;font-size:13px;text-align:center;font-weight:600;'+
+      (isOk
+        ? 'background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7'
+        : 'background:#FFF3E0;color:#E65100;border:1px solid #FFCC80');
+    note.innerHTML = isOk
+      ? '✅ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（學生 + 家長雙方均已完成）'
+      : '⚠️ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（'+(recStudent?'家長尚未完成':'學生尚未完成')+'，目前僅顯示單方資料）';
     app.insertBefore(note, app.firstChild);
   }
 
@@ -1443,6 +1441,26 @@ initCharts('qm');
 
     dynBlock.innerHTML = html;
     sec.insertBefore(dynBlock, sec.firstChild);
+
+    // ── 隱藏 demo 範例內容 ─────────────────────────
+    // 既然 dynBlock 已用真實資料呈現概述/雙方交叉分析，
+    // 移除頁面內所有 .qm-sec / .zy-sec / .kz-sec / .zy-sec-b / .kz-sec-b
+    // 這些區塊內容是 demo 範例（林禹希、王大明、廖楷淯 的硬編碼分數），
+    // 避免家長誤以為是自家小孩的真實資料。
+    const demoSecSelectors = '.qm-sec, .zy-sec, .zy-sec-b, .kz-sec, .kz-sec-b';
+    sec.querySelectorAll(demoSecSelectors).forEach(el => { el.style.display = 'none'; });
+
+    // 在 dynBlock 後方加上一段「完整圖表」指引卡片
+    const guide = document.createElement('div');
+    guide.style.cssText = 'background:#F3E5F5;border:2px dashed #B39DDB;border-radius:12px;padding:16px 20px;margin:0 0 14px;color:#4A148C';
+    guide.innerHTML =
+      '<div style="font-weight:900;font-size:13px;margin-bottom:6px">📌 想看完整視覺化圖表？</div>'+
+      '<div style="font-size:12px;line-height:1.7">' +
+        '本頁面為「即時資料概述」，僅顯示真實雙方分數的交叉分析摘要。<br>'+
+        '完整的雙層雷達圖、四象限教養分析、極座標圖等互動視覺化圖表，'+
+        '請查看寄送至您信箱的 <strong>PDF 附件報告</strong>，或聯繫老師索取列印版本。'+
+      '</div>';
+    sec.insertBefore(guide, dynBlock.nextSibling);
   }
 })();
 
