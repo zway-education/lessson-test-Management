@@ -8,8 +8,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{max-width:100%;overflow-x:hidden}
 body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:#dde2ea;min-height:100vh;padding:18px 14px}
 #app{max-width:1040px;margin:0 auto}
+img,canvas,svg,video{max-width:100%;height:auto}
 
 /* ── TOP NAV ── */
 .top-nav{display:flex;gap:8px;margin-bottom:16px;background:#fff;padding:10px 14px;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.1);align-items:center;flex-wrap:wrap}
@@ -162,6 +164,56 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:#dde2
 .pm-actions button{padding:8px 20px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit}
 .pm-ok{background:#5E35B1;color:#fff}
 .pm-cancel{background:#f0f0f0;color:#555}
+
+/* ═══ 手機版 RWD（修正右側裁切） ═══════════════════════ */
+@media (max-width:768px){
+  body{padding:10px 8px}
+  #app{max-width:100%}
+  .top-nav{padding:8px 10px;gap:6px}
+  .tab-btn{padding:7px 14px;font-size:12px}
+  .nav-label{display:none}
+
+  /* 多欄網格 → 單欄/兩欄 */
+  .tc{grid-template-columns:1fr;gap:10px}
+  .fc{grid-template-columns:1fr 1fr;gap:8px}
+  .cmp-body{grid-template-columns:1fr}
+  .cmp-side{border-right:none;border-bottom:1px solid #f0f0f0}
+  .cmp-side:last-child{border-bottom:none}
+
+  /* Banner 與內邊距收緊 */
+  .qm-banner .bb,.zy-banner .bb,.kz-banner .bb{padding:14px 14px 12px;gap:10px}
+  .qm-banner::before,.zy-banner::before,.kz-banner::before{display:none}
+  .qm-sec,.zy-sec,.kz-sec{padding:14px;margin:8px}
+  .ttl{font-size:16px}
+
+  /* 圖表容器自適應 */
+  .ch240{height:200px}
+  .ch220{height:180px}
+  .ch200{height:170px}
+  .ch180{height:160px}
+  .ch160{height:140px}
+  canvas{max-width:100%!important;height:auto!important}
+
+  /* 基本資料雙欄 → 雙欄但較窄 */
+  .ic-row{grid-template-columns:4.5em 1fr 4.5em 1fr}
+
+  /* 表格與半圓量表 */
+  .stbl{font-size:10px}
+  .stbl th,.stbl td{padding:5px 4px}
+  .gauge-wrap{height:100px}
+  .gauge-label{font-size:18px}
+
+  /* 浮動列印按鈕 */
+  .print-fab{bottom:14px;right:14px}
+  .print-fab button{padding:8px 14px;font-size:12px}
+}
+
+@media (max-width:420px){
+  .fc{grid-template-columns:1fr 1fr}
+  .ic-row{grid-template-columns:1fr;gap:0}
+  .ic-row .ic-l{margin-top:4px}
+  .meta{font-size:10px;gap:8px}
+}
 
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
@@ -708,23 +760,9 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:#dde2
 </div><!-- sec_cmp -->
 
 
-<!-- ═══ 列印浮動按鈕 ═══════════════════════════════════ -->
+<!-- ═══ 列印浮動按鈕（直接列印當前測驗者，不再跳選擇 Modal） ═══ -->
 <div class="print-fab">
-  <button class="btn-print" onclick="openPrintModal()">🖨 列印 / 存為 PDF</button>
-</div>
-
-<!-- 列印選擇 Modal -->
-<div class="print-modal-bg" id="printModal">
-  <div class="print-modal">
-    <h3>選擇要列印的報告</h3>
-    <label class="pm-row"><input type="checkbox" id="pck_qm" checked><span>🌟 啟蒙班　林禹希</span></label>
-    <label class="pm-row"><input type="checkbox" id="pck_zy" checked><span>🔬 智優班　王大明</span></label>
-    <label class="pm-row"><input type="checkbox" id="pck_kz" checked><span>💡 開智班　廖楷淯</span></label>
-    <div class="pm-actions">
-      <button class="pm-cancel" onclick="closePrintModal()">取消</button>
-      <button class="pm-ok" onclick="confirmPrint()">確認列印</button>
-    </div>
-  </div>
+  <button class="btn-print" onclick="directPrint()">🖨 列印 / 存為 PDF</button>
 </div>
 
 </div><!-- app -->
@@ -1155,38 +1193,32 @@ function sw(cls){
 }
 
 /* ── 列印功能 ─────────────────────────────────────────── */
-function openPrintModal(){ document.getElementById('printModal').classList.add('open'); }
-function closePrintModal(){ document.getElementById('printModal').classList.remove('open'); }
+/**
+ * 直接列印當前測驗者：
+ *  1. 找到目前 active 的 .cls 區塊（對應使用者正在看的班別）
+ *  2. 確保該班的 Chart.js 圖表已初始化（避免空白圖）
+ *  3. 將其他班別的 print-target 移除，只保留當前班別
+ *  4. 觸發 window.print()
+ */
+function directPrint(){
+  const active = document.querySelector('.cls.active');
+  if(!active){ window.print(); return; }
+  const cls = active.id.replace(/^sec_/,''); // qm / zy / kz / cmp
 
-function confirmPrint(){
-  closePrintModal();
-  const sel = {
-    qm: document.getElementById('pck_qm').checked,
-    zy: document.getElementById('pck_zy').checked,
-    kz: document.getElementById('pck_kz').checked
-  };
-  if(!sel.qm && !sel.zy && !sel.kz){ alert('請至少勾選一個班級'); return; }
+  // 確保圖表已渲染
+  try{
+    if(cls==='qm' && !inited.qm){ initQM(); inited.qm=true; }
+    if(cls==='zy' && !inited.zy){ initZY(); inited.zy=true; }
+    if(cls==='kz' && !inited.kz){ initKZ(); inited.kz=true; }
+    if(cls==='cmp' && !inited.cmp){ if(typeof initCMP==='function'){ initCMP(); inited.cmp=true; } }
+  }catch(e){ console.warn('init chart error', e); }
 
-  // 確保選到的班圖表已初始化
-  if(sel.qm && !inited.qm){ initQM(); inited.qm=true; }
-  if(sel.zy && !inited.zy){ initZY(); inited.zy=true; }
-  if(sel.kz && !inited.kz){ initKZ(); inited.kz=true; }
-
-  // 標記要列印的 section
-  ['qm','zy','kz'].forEach(c=>{
-    const el = document.getElementById('sec_'+c);
-    if(!el) return;
-    el.classList.toggle('print-target', !!sel[c]);
-    // 如果有多個班要印，第二個開始加分頁線
+  // 只保留當前班別為 print-target
+  document.querySelectorAll('.cls').forEach(el=>{
+    el.classList.toggle('print-target', el===active);
   });
-
-  // 在各 section 間插入分頁 (只做一次)
+  // 清除多餘的分頁線
   document.querySelectorAll('.print-page-break').forEach(e=>e.remove());
-  const targets = ['qm','zy','kz'].filter(c=>sel[c]);
-  targets.slice(1).forEach(c=>{
-    const el = document.getElementById('sec_'+c);
-    if(el){ const pb=document.createElement('div'); pb.className='print-page-break'; el.parentNode.insertBefore(pb,el); }
-  });
 
   setTimeout(()=>{ window.print(); }, 200);
 }
@@ -1236,16 +1268,8 @@ initCharts('qm');
   const nav=document.querySelector('.top-nav');
   if(nav) nav.style.display='none';
 
-  // 列印按鈕改成直接 window.print()，跳過班別選擇 Modal
-  const printBtn=document.querySelector('.btn-print');
-  if(printBtn){
-    printBtn.onclick=function(){
-      setTimeout(function(){ window.print(); }, 100);
-    };
-  }
-  // 移除 Modal（避免被誤觸 / 殘留 hidden 元素）
-  const modal=document.getElementById('printModal');
-  if(modal && modal.parentNode) modal.parentNode.removeChild(modal);
+  // 列印按鈕已固定使用 directPrint()，會自動以當前測驗者班別為列印目標
+  // （不需再覆寫 onclick；Modal 已從 HTML 移除）
 
   // 把其他 .cls section 從 DOM 移除（含 sec_cmp）
   document.querySelectorAll('.cls').forEach(function(sec){

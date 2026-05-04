@@ -916,17 +916,7 @@ function svRenderConfirm(){
   document.getElementById('confirmTag').style.background=color;
   document.getElementById('confirmTag').textContent=CLS_LABEL[svCls];
   document.getElementById('submitBtn').className='btn btn-primary btn-'+svCls;
-  let dimAvgs={};
-  (SV_Q_CACHE[svQKey]||[]).forEach(q=>{
-    const val=svAnswers[q.key];if(!val) return;
-    const label=q.subdim?`${q.dim} › ${q.subdim}`:q.dim;
-    if(!dimAvgs[label]) dimAvgs[label]={sum:0,cnt:0};
-    dimAvgs[label].sum+=val;dimAvgs[label].cnt++;
-  });
-  let dimHtml='';
-  Object.entries(dimAvgs).forEach(([k,v])=>{
-    dimHtml+=`<div class="confirm-row"><span class="confirm-key">${k}</span><span class="score-chip">${(v.sum/v.cnt).toFixed(2)}</span></div>`;
-  });
+  // 確認頁僅顯示基本資料，不再顯示各維度均值預覽
   document.getElementById('confirmContent').innerHTML=`
   <div class="confirm-card">
     <div class="confirm-title"> 基本資料</div>
@@ -936,17 +926,18 @@ function svRenderConfirm(){
     <div class="confirm-row"><span class="confirm-key">家長</span><span class="confirm-val">${svInfo.pname}${svInfo.prel?' ('+svInfo.prel+')':''}</span></div>
     <div class="confirm-row"><span class="confirm-key">填寫身份</span><span class="confirm-val">${ROLE_LABEL[svRole]}</span></div>
   </div>
-  <div class="confirm-card">
-    <div class="confirm-title"> 各維度均值預覽</div>
-    ${dimHtml||'<div style="color:#bbb;font-size:12px">（尚未填寫任何題目）</div>'}
+  <div style="text-align:center;color:#888;font-size:12px;margin-top:8px">
+    各維度作答內容已自動儲存，請確認上方基本資料無誤後送出
   </div>`;
 }
 async function svDoSubmit(){
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='送出中…';
+  // 產生台灣時間（Asia/Taipei, UTC+8），格式 YYYY-MM-DD HH:mm:ss
+  const _twNow = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Taipei', hour12: false });
   const payload={action:'saveResponse',record:{
     _id:'sv_'+Date.now(),
-    timestamp:new Date().toISOString().replace('T',' ').slice(0,19),
+    timestamp: _twNow,
     class:svCls,role:svRole,qKey:svQKey,
     name:svInfo.name,class_name:svInfo.grade,eval_date:svInfo.date,fill_date:svInfo.filldate,
     school:svInfo.school,ename:svInfo.ename,prel:svInfo.prel,
