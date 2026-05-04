@@ -533,7 +533,7 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
       <div class="am-hd-title">資料管理</div>
       <div class="am-hd-sub">台灣展威文化教育測評系統</div>
     </div>
-    <button class="am-hd-btn" onclick="amLoadRecords()">⟳ 重新整理</button>
+    <button class="am-hd-btn" onclick="amLoadRecords(true)">⟳ 重新整理</button>
   </div>
   <div id="demoBanner" class="demo-banner">
     <span></span>
@@ -1119,8 +1119,30 @@ const AM_DEMO = [
 let amAllRecords=[],amFiltered=[],amSelected=null,amIsDemoMode=false;
 let amActiveClass='',amActiveSubClass='';
 
-async function amLoadRecords(){
-  amShowLoading();
+/* ⚡ 快取 + Stale-While-Revalidate
+   先用 localStorage 立即顯示，再背景拉新版自動更新 */
+const AM_CACHE_KEY = 'amRecordsCache_v2';
+const AM_CACHE_TTL_MIN = 30;  // 超過 30 分鐘的快取仍可用，但會立刻拉新
+
+function _amReadCache(){
+  try{
+    const raw=localStorage.getItem(AM_CACHE_KEY);
+    if(!raw) return null;
+    const obj=JSON.parse(raw);
+    if(!obj.records || !Array.isArray(obj.records)) return null;
+    return obj;
+  }catch(e){ return null; }
+}
+function _amWriteCache(records){
+  try{
+    localStorage.setItem(AM_CACHE_KEY, JSON.stringify({records, ts:Date.now()}));
+  }catch(e){}
+}
+function _amCacheAgeMin(cache){
+  return cache && cache.ts ? Math.round((Date.now()-cache.ts)/60000) : null;
+}
+
+async function amLoadRecords(forceFresh){
   if(ZW.isDevMode){
     amIsDemoMode=true;
     document.getElementById('demoBanner').style.display='flex';
@@ -1128,12 +1150,64 @@ async function amLoadRecords(){
   }
   amIsDemoMode=false;
   document.getElementById('demoBanner').style.display='none';
+
+  // ── Step 1: 立即顯示快取 ───────────────
+  const cache=_amReadCache();
+  if(cache && !forceFresh){
+    amAllRecords=cache.records;
+    amRenderSubClsRow();
+    amApplyFilter();
+    _amSetFreshness('cached', _amCacheAgeMin(cache));
+  } else {
+    amShowLoading();
+  }
+
+  // ── Step 2: 背景拉新版（用輕量 summary 端點）─────
   try{
-    const res=await fetch(ZW.APPS_SCRIPT_URL+'?action=getAll');
+    const t0=Date.now();
+    const res=await fetch(ZW.APPS_SCRIPT_URL+'?action=getAllSummary');
     const json=await res.json();
-    if(json.status==='ok'){amAllRecords=json.records||[];amRenderSubClsRow();amApplyFilter();}
-    else amShowError('Apps Script 回傳錯誤：'+(json.message||'未知錯誤'));
-  }catch(err){amShowError('無法連線：'+err.message);}
+    const ms=Date.now()-t0;
+    if(json.status==='ok'){
+      const fresh=json.records||[];
+      // 比對快取是否真的不同（避免無謂重渲染）
+      const changed=!cache || JSON.stringify(fresh.map(r=>r._id))!==JSON.stringify(cache.records.map(r=>r._id));
+      amAllRecords=fresh;
+      _amWriteCache(fresh);
+      if(changed || forceFresh){
+        amRenderSubClsRow();
+        amApplyFilter();
+      }
+      _amSetFreshness('fresh', null, ms);
+    } else if(!cache){
+      amShowError('Apps Script 回傳錯誤：'+(json.message||'未知錯誤'));
+    }
+  }catch(err){
+    if(!cache) amShowError('無法連線：'+err.message);
+    else _amSetFreshness('offline');
+  }
+}
+
+function _amSetFreshness(state, ageMin, ms){
+  let el=document.getElementById('amFreshness');
+  if(!el){
+    el=document.createElement('span');
+    el.id='amFreshness';
+    el.style.cssText='margin-left:8px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px';
+    const btn=document.querySelector('.am-hd-btn');
+    if(btn && btn.parentNode) btn.parentNode.insertBefore(el, btn);
+  }
+  if(state==='cached'){
+    el.style.cssText+=';background:#FEF3C7;color:#92400E';
+    el.textContent='快取 '+(ageMin!=null?ageMin+' 分前':'')+' · 背景更新中…';
+  } else if(state==='fresh'){
+    el.style.cssText+=';background:#D1FAE5;color:#065F46';
+    el.textContent='已更新 '+(ms?'('+ms+'ms)':'');
+    setTimeout(()=>{ if(el) el.style.opacity='0.4'; }, 3000);
+  } else if(state==='offline'){
+    el.style.cssText+=';background:#FEE2E2;color:#991B1B';
+    el.textContent='離線 · 顯示快取';
+  }
 }
 
 function amSelectCls(cls){
@@ -1206,6 +1280,18 @@ function amCalcDims(rec){
   const labels=ZW.dimLabels[rec.qKey]||[];
   const result=[];
   for(let s=1;s<labels.length;s++){
+    // 優先用 summary 端點預先算好的 step{n}Avg（瞬間取得）
+    if(rec['step'+s+'Avg']!==undefined){
+      result.push({
+        label:labels[s],
+        avg:Number(rec['step'+s+'Avg']),
+        count:Number(rec['step'+s+'Count']||0),
+        step:s,
+        vals:[]  // 摘要版沒有原始 vals，畫迷你 bar 不需要
+      });
+      continue;
+    }
+    // 完整版：從 q_ 欄位逐個讀
     const prefix=`${rec.qKey}_s${s}_q`;
     const vals=[];
     for(let q=0;q<50;q++){
@@ -1284,25 +1370,41 @@ function amRenderDetail(rec){
       <div class="ddim-track"><div class="ddim-fill" style="width:${d.avg/5*100}%;background:${color}"></div></div>
     </div>`).join('')}</div>`:''}`;
 }
-function amOpenReport(){
+async function amOpenReport(){
   if(!amSelected) return;
-  // 同步寫到 localStorage 給 測評報告_圖表優化版.html 讀
-  try{ localStorage.setItem('report_record', JSON.stringify(amSelected)); }catch(e){}
-  // 先在內嵌 report 頁渲染我們自己的版本
-  rpRenderReport(amSelected);
+  let full=amSelected;
+  const hasAnswers=Object.keys(amSelected).some(k=>/_s\d+_q\d+$/.test(k));
+  if(!hasAnswers && !ZW.isDevMode){
+    try{
+      const res=await fetch(ZW.APPS_SCRIPT_URL+'?action=getRecord&id='+encodeURIComponent(amSelected._id));
+      const json=await res.json();
+      if(json.status==='ok' && json.record) full=json.record;
+    }catch(e){}
+  }
+  try{ localStorage.setItem('report_record', JSON.stringify(full)); }catch(e){}
+  rpRenderReport(full);
   showPage('report');
 }
-function amOpenRichReport(){
+async function amOpenRichReport(){
   if(!amSelected) return;
-  try{ localStorage.setItem('report_record', JSON.stringify(amSelected)); }catch(e){}
-  // 開啟富版報告（同資料夾的 測評報告_圖表優化版.html）
+  // 摘要版的 record 沒有 q_ 答題欄；先看看是否需要拉完整版
+  let full=amSelected;
+  const hasAnswers=Object.keys(amSelected).some(k=>/_s\d+_q\d+$/.test(k));
+  if(!hasAnswers && !ZW.isDevMode){
+    try{
+      const res=await fetch(ZW.APPS_SCRIPT_URL+'?action=getRecord&id='+encodeURIComponent(amSelected._id));
+      const json=await res.json();
+      if(json.status==='ok' && json.record) full=json.record;
+    }catch(e){ /* 拉不到就用 summary 版本，圖表會空 */ }
+  }
+  try{ localStorage.setItem('report_record', JSON.stringify(full)); }catch(e){}
   window.open('測評報告_圖表優化版.html', '_blank');
 }
 function amShowLoading(){
   document.getElementById('tableContainer').innerHTML='<div class="state-msg"><div class="spinner"></div><p style="margin-top:12px">載入資料中…</p></div>';
 }
 function amShowError(msg){
-  document.getElementById('tableContainer').innerHTML=`<div class="state-msg"><div class="icon" data-warn="1"></div><h3>載入失敗</h3><p>${amEsc(msg)}</p><button onclick="amLoadRecords()" style="margin-top:12px;padding:7px 16px;border-radius:7px;border:1.5px solid #ddd;background:#fff;cursor:pointer;font-size:12px">重試</button></div>`;
+  document.getElementById('tableContainer').innerHTML=`<div class="state-msg"><div class="icon" data-warn="1"></div><h3>載入失敗</h3><p>${amEsc(msg)}</p><button onclick="amLoadRecords(true)" style="margin-top:12px;padding:7px 16px;border-radius:7px;border:1.5px solid #ddd;background:#fff;cursor:pointer;font-size:12px">重試</button></div>`;
 }
 
 /* ════════════════════════════════════════════════════════════════
