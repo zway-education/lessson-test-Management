@@ -1236,6 +1236,17 @@ initCharts('qm');
   const nav=document.querySelector('.top-nav');
   if(nav) nav.style.display='none';
 
+  // 列印按鈕改成直接 window.print()，跳過班別選擇 Modal
+  const printBtn=document.querySelector('.btn-print');
+  if(printBtn){
+    printBtn.onclick=function(){
+      setTimeout(function(){ window.print(); }, 100);
+    };
+  }
+  // 移除 Modal（避免被誤觸 / 殘留 hidden 元素）
+  const modal=document.getElementById('printModal');
+  if(modal && modal.parentNode) modal.parentNode.removeChild(modal);
+
   // 把其他 .cls section 從 DOM 移除（含 sec_cmp）
   document.querySelectorAll('.cls').forEach(function(sec){
     if(sec.id!=='sec_'+rec.class){
