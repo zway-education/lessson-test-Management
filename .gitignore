@@ -1,0 +1,5 @@
+﻿push_log.txt
+auto_push.ps1
+*.bak
+.DS_Store
+Thumbs.db

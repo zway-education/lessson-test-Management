@@ -8,7 +8,7 @@
 const ZW = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxQNjBnZnw90piQd4k55MGUoRJQG9Gn0gsj_6XkMZHVuOyvb-b3JQz3uLFxpmId6WD9Zw/exec',
   clsOrder: ['qm', 'kz', 'zy'],
-  clsLabel: { qm: '🌟 啟蒙班', kz: '💡 開智班', zy: '🔬 智優班' },
+  clsLabel: { qm: '啟蒙班', kz: '開智班', zy: '智優班' },
   clsShort: { qm: '啟蒙班', kz: '開智班', zy: '智優班' },
   color:     { qm: '#FF8C00', kz: '#1B6E35', zy: '#1251A3' },
   colorDark: { qm: '#FF5500', kz: '#239B4A', zy: '#1A5FBF' },
@@ -440,6 +440,63 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
   .rp-stat,.rp-hl-card,.rp-chart-card,.rp-info-card,.rp-dim-card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid}
   .rp-dim-grid{break-inside:avoid}
 }
+
+/* === 文字 icon（移除 emoji 後新增） === */
+.cls-icon[data-cls]{font-size:22px;font-weight:900;letter-spacing:.5px;
+  width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 10px;line-height:1}
+.cls-icon[data-cls="qm"]{background:#FFF1E0;color:#FF8C00;border:2px solid #FFCC80}
+.cls-icon[data-cls="kz"]{background:#E6F3EA;color:#1B6E35;border:2px solid #239B4A}
+.cls-icon[data-cls="zy"]{background:#E3EEFA;color:#1251A3;border:2px solid #1A5FBF}
+.role-icon[data-role]{font-size:18px;font-weight:900;letter-spacing:1px;
+  width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 8px;line-height:1}
+.role-icon[data-role="student"]{background:#E3EEFA;color:#1251A3;border:2px solid #1A5FBF}
+.role-icon[data-role="parent"]{background:#FFF1E0;color:#FF8C00;border:2px solid #FFCC80}
+.success-icon[data-icon="ok"]{width:64px;height:64px;border-radius:50%;background:#22C55E;
+  margin:0 auto 18px;position:relative}
+.success-icon[data-icon="ok"]::after{content:"";position:absolute;left:18px;top:30px;
+  width:28px;height:14px;border:4px solid #fff;border-top:none;border-right:none;
+  transform:rotate(-45deg);box-sizing:border-box}
+.icon[data-empty]{font-size:0;width:48px;height:48px;margin:0 auto 14px;
+  border:2px dashed #D1D5DB;border-radius:8px;background:#fff;display:block}
+.icon[data-warn]{font-size:0;width:48px;height:48px;margin:0 auto 14px;
+  border:2px solid #F59E0B;border-radius:50%;background:#FEF3C7;display:flex;align-items:center;justify-content:center;position:relative}
+.icon[data-warn]::after{content:"!";color:#F59E0B;font-size:24px;font-weight:900;font-family:serif}
+
+/* === RWD 加強（後台） === */
+@media(max-width:600px){
+  .g-nav{padding:0 10px}
+  .g-logo{font-size:12px}.g-logo small{display:none}
+  .g-tab{padding:5px 9px;font-size:11px}
+  #adminUserBox{font-size:10px;padding-right:6px}
+  #adminUserBox span{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .am-hd{padding:10px 12px;flex-wrap:wrap;gap:6px}
+  .am-hd-title{font-size:14px}
+  .am-hd-sub{font-size:10px}
+  .cls-filter-row,.filter-bar{padding:6px 10px;gap:5px}
+  .cls-pill{padding:4px 9px;font-size:11px}
+  .filter-name{width:100%;flex:1}
+  .stats-bar{padding:6px 10px;gap:8px;flex-wrap:wrap}
+  .stat-chip{font-size:10px}
+  .rec-table th,.rec-table td{padding:7px 8px;font-size:11px}
+  .am-main{flex-direction:column}
+  .detail-panel{width:100%;border-left:none;border-top:1px solid #E5E7EB;max-height:55vh}
+  .table-wrap{padding:10px}
+  .rp-back{flex-wrap:wrap;padding:8px 12px;gap:6px}
+  .rp-print-btn{margin-left:0}
+  .rp-wrap{padding:12px 10px 40px}
+  .rp-info-card{flex-direction:column;text-align:center}
+  .rp-summary{grid-template-columns:repeat(2,1fr)!important}
+  .rp-dim-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:480px){
+  .role-grid{grid-template-columns:1fr}
+  .v-found-grid{grid-template-columns:1fr}
+  .filter-bar{flex-direction:column;align-items:stretch}
+  #loginGate > div{padding:0 8px}
+  #loginGate h1{font-size:20px}
+}
 </style>
 </head>
 <body>
@@ -448,10 +505,10 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
   <div class="g-logo">台灣展威文化教育<small>TAIWAN ZHANWEI EDUCATION</small></div>
   <div class="g-tabs">
     <button class="g-tab active" id="nav-admin" onclick="showPage('admin')">
-      📊 資料管理
+      資料管理
     </button>
     <button class="g-tab" id="nav-report" onclick="showPage('report')">
-      📋 測評報告
+      測評報告
     </button>
   </div>
   <div id="adminUserBox" style="display:none;align-items:center;gap:8px;color:#fff;font-size:12px;margin-left:auto;padding-right:16px">
@@ -473,21 +530,21 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
 <div id="page-admin" class="page on">
   <div class="am-hd">
     <div>
-      <div class="am-hd-title">📊 資料管理</div>
+      <div class="am-hd-title">資料管理</div>
       <div class="am-hd-sub">台灣展威文化教育測評系統</div>
     </div>
     <button class="am-hd-btn" onclick="amLoadRecords()">⟳ 重新整理</button>
   </div>
   <div id="demoBanner" class="demo-banner">
-    <span>⚠️</span>
+    <span></span>
     <span><strong>示範模式</strong>：目前顯示的是範例資料。請將 <code>config.js</code> 中的 <code>APPS_SCRIPT_URL</code> 換成您的 Apps Script 網址後重新整理。</span>
   </div>
   <div class="cls-filter-row">
     <span class="cls-filter-label">班種</span>
     <button id="pill-all" class="cls-pill all-btn active" onclick="amSelectCls('')">全部</button>
-    <button id="pill-qm"  class="cls-pill qm-btn" onclick="amSelectCls('qm')">🌟 啟蒙班</button>
-    <button id="pill-kz"  class="cls-pill kz-btn" onclick="amSelectCls('kz')">💡 開智班</button>
-    <button id="pill-zy"  class="cls-pill zy-btn" onclick="amSelectCls('zy')">🔬 智優班</button>
+    <button id="pill-qm"  class="cls-pill qm-btn" onclick="amSelectCls('qm')"> 啟蒙班</button>
+    <button id="pill-kz"  class="cls-pill kz-btn" onclick="amSelectCls('kz')"> 開智班</button>
+    <button id="pill-zy"  class="cls-pill zy-btn" onclick="amSelectCls('zy')"> 智優班</button>
     <span class="cls-pill-divider">|</span>
     <label class="cls-filter-label">角色</label>
     <select class="filter-role" id="fRole" onchange="amApplyFilter()">
@@ -505,7 +562,7 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
     <input class="filter-date" type="date" id="fFrom" onchange="amApplyFilter()">
     <span style="font-size:11px;color:#aaa">～</span>
     <input class="filter-date" type="date" id="fTo" onchange="amApplyFilter()">
-    <button class="filter-clear" onclick="amClearFilter()">✕ 清除</button>
+    <button class="filter-clear" onclick="amClearFilter()"> 清除</button>
   </div>
   <div class="stats-bar" id="statsBar">
     <span class="stat-chip"><span class="dot dot-all"></span>全部 <span id="cntAll">0</span></span>
@@ -523,11 +580,11 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
       <div class="dp-header">
         <div class="dp-name" id="dpName">—</div>
         <div class="dp-cls"  id="dpCls">—</div>
-        <button class="dp-close" onclick="amClosePanel()">✕</button>
+        <button class="dp-close" onclick="amClosePanel()"></button>
       </div>
       <div class="dp-body" id="dpBody"></div>
       <div class="dp-actions">
-        <button class="btn-report" onclick="amOpenRichReport()">📋 開啟完整報告（富版）</button>
+        <button class="btn-report" onclick="amOpenRichReport()"> 開啟完整報告（富版）</button>
         <button class="btn-report" style="background:#555" onclick="amOpenReport()">簡版預覽</button>
         <button class="btn-close-panel" onclick="amClosePanel()">關閉</button>
       </div>
@@ -543,11 +600,11 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
     <button class="rp-back-btn" onclick="showPage('admin')">← 返回管理</button>
     <span class="rp-back-title" id="rpBackTitle">測評報告</span>
     <span class="rp-back-sub" id="rpBackSub"></span>
-    <button class="rp-print-btn" onclick="window.print()">🖨 列印</button>
+    <button class="rp-print-btn" onclick="window.print()">列印</button>
   </div>
   <div class="rp-wrap" id="rpWrap">
     <div class="rp-empty">
-      <div class="icon">📋</div>
+      <div class="icon"></div>
       <p>請先從「資料管理」選取一筆紀錄後點擊「開啟報告」</p>
     </div>
   </div>
@@ -616,7 +673,7 @@ async function svDoLookup(){
     svVerifiedRecord={name,class:clsVal,class_name:'（示範班級）',level:'Level 1',
       parent_name:'',phone:'',email:'',assessment_count:0,nextAssessment:1};
     svShowVResult('found',svVerifiedRecord);
-    btn.disabled=false;btn.innerHTML='<span>🔍</span><span>查詢學員資料</span>';return;
+    btn.disabled=false;btn.innerHTML='<span>查詢學員資料</span>';return;
   }
   try{
     const res=await fetch(`${SV_URL}?action=verify&name=${encodeURIComponent(name)}&class=${clsVal}`);
@@ -628,7 +685,7 @@ async function svDoLookup(){
       svVerifiedRecord=null; svShowVResult('warn','API 錯誤：'+json.message);
     } else { svVerifiedRecord=null; svShowVResult('notfound',name); }
   }catch(err){ svShowVResult('warn','查詢失敗：'+err.message); }
-  btn.disabled=false;btn.innerHTML='<span>🔍</span><span>查詢學員資料</span>';
+  btn.disabled=false;btn.innerHTML='<span>查詢學員資料</span>';
 }
 
 function svShowVResult(type,data){
@@ -641,7 +698,7 @@ function svShowVResult(type,data){
     const nth=data.nextAssessment||1;
     const nthLabel=['第一','第二','第三','第四','第五','第六','第七','第八'][nth-1]||(nth+'');
     el.innerHTML=`<div class="v-found">
-      <div class="v-found-title">✅ 找到學員資料！</div>
+      <div class="v-found-title">已找到學員資料</div>
       <div class="v-found-grid">
         <div class="v-found-cell"><div class="v-found-cell-label">孩子姓名</div>
           <div class="v-found-cell-val">${data.name||'—'}</div></div>
@@ -657,11 +714,11 @@ function svShowVResult(type,data){
         確認，開始填寫問卷 →</button></div>`;
   } else if(type==='notfound'){
     el.innerHTML=`<div class="v-notfound">
-      <div class="v-notfound-title">❌ 找不到符合的學員</div>
+      <div class="v-notfound-title">找不到符合的學員</div>
       <div class="v-notfound-body">找不到「<strong>${data}</strong>」的學員資料。<br>
       請確認姓名與班別是否正確，或聯繫老師確認資料是否已建立。</div></div>`;
   } else if(type==='warn'){
-    el.innerHTML=`<div class="v-warn">⚠️ ${data}</div>`;
+    el.innerHTML=`<div class="v-warn">${data}</div>`;
   } else { el.innerHTML=''; }
 }
 
@@ -758,7 +815,7 @@ function svRenderInfo(c,color,bg){
     <div class="step-tag" style="background:${color}">STEP 1</div>
     <div class="step-title">基本資料</div>
     <div class="step-sub">請填寫以下資訊以便建立評量紀錄</div>
-    <div class="step-role-badge" style="background:${bg};color:${color}">${isParent?'👨‍👩‍👧 家長填寫':'🧑 學生自填'}</div>
+    <div class="step-role-badge" style="background:${bg};color:${color}">${isParent?'‍‍ 家長填寫':' 學生自填'}</div>
   </div>
   <div class="form-section">
     <div class="form-section-title">${isParent?'孩子基本資訊':'學生基本資訊'}</div>
@@ -807,7 +864,7 @@ function svRenderQuestions(c,step,color){
     <div class="step-tag" style="background:${color}">STEP ${stepNum}</div>
     <div class="step-title">${step.label}</div>
     <div class="step-sub">每題從 1（完全不符合）到 5（完全符合）選擇最符合的分數</div>
-    <div class="step-role-badge" style="background:${CLS_BG[svCls]};color:${color}">${svRole==='parent'?'👨‍👩‍👧 家長填寫':'🧑 學生自填'}</div>
+    <div class="step-role-badge" style="background:${CLS_BG[svCls]};color:${color}">${svRole==='parent'?'‍‍ 家長填寫':' 學生自填'}</div>
   </div>`;
   if(!groups.length){
     html+='<div class="q-section"><p style="color:#bbb;font-size:13px;text-align:center;padding:20px 0">題目載入中，或此步驟尚無題目。</p></div>';
@@ -872,7 +929,7 @@ function svRenderConfirm(){
   });
   document.getElementById('confirmContent').innerHTML=`
   <div class="confirm-card">
-    <div class="confirm-title">📋 基本資料</div>
+    <div class="confirm-title"> 基本資料</div>
     <div class="confirm-row"><span class="confirm-key">姓名</span><span class="confirm-val">${svInfo.name}</span></div>
     <div class="confirm-row"><span class="confirm-key">班級</span><span class="confirm-val">${svInfo.grade}</span></div>
     <div class="confirm-row"><span class="confirm-key">評量日期</span><span class="confirm-val">${svInfo.date}</span></div>
@@ -880,7 +937,7 @@ function svRenderConfirm(){
     <div class="confirm-row"><span class="confirm-key">填寫身份</span><span class="confirm-val">${ROLE_LABEL[svRole]}</span></div>
   </div>
   <div class="confirm-card">
-    <div class="confirm-title">📊 各維度均值預覽</div>
+    <div class="confirm-title"> 各維度均值預覽</div>
     ${dimHtml||'<div style="color:#bbb;font-size:12px">（尚未填寫任何題目）</div>'}
   </div>`;
 }
@@ -901,7 +958,7 @@ async function svDoSubmit(){
       console.log('[Dev] Payload:',payload.record);
       await new Promise(r=>setTimeout(r,800));
     } else {
-      // ⚠️ 必須用 text/plain，避免 application/json 觸發 CORS preflight
+      // 必須用 text/plain，避免 application/json 觸發 CORS preflight
       // Apps Script doPost 透過 e.postData.contents 收到 JSON 字串，再 JSON.parse
       // ?action=saveResponse 同步加在 URL，雙保險（doGet/doPost 都能讀到）
       const res=await fetch(SV_URL+'?action=saveResponse',{
@@ -919,7 +976,7 @@ async function svDoSubmit(){
     svGoScreen(4);
   }catch(e){
     alert('送出失敗，請稍後再試。\n'+e.message);
-    btn.disabled=false;btn.textContent='確認送出 ✓';
+    btn.disabled=false;btn.textContent='確認送出 ';
   }
 }
 
@@ -937,7 +994,7 @@ function svRenderPostReport(rec){
   const color=ZW.color[rec.class]||'#555';
   if(!dimsFull.length){ box.innerHTML=''; return; }
   box.innerHTML=`<div style="background:#fff;border-radius:14px;padding:18px;margin-top:14px;box-shadow:0 1px 6px rgba(0,0,0,.06)">
-    <div style="font-weight:700;font-size:14px;margin-bottom:12px">📋 您的測評結果</div>
+    <div style="font-weight:700;font-size:14px;margin-bottom:12px"> 您的測評結果</div>
     ${dimsFull.map(d=>`<div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
         <span>${d.label}</span><span style="color:${color};font-weight:700">${d.avg.toFixed(2)} / 5</span>
@@ -1175,7 +1232,7 @@ function amEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 function amRenderTable(){
   const cont=document.getElementById('tableContainer');
   if(!amFiltered.length){
-    cont.innerHTML='<div class="state-msg"><div class="icon">📭</div><h3>沒有符合條件的紀錄</h3><p>請調整篩選條件或重新整理。</p></div>';return;
+    cont.innerHTML='<div class="state-msg"><div class="icon" data-empty="1"></div><h3>沒有符合條件的紀錄</h3><p>請調整篩選條件或重新整理。</p></div>';return;
   }
   const rows=amFiltered.map((rec,i)=>`<tr class="${amSelected&&amSelected._id===rec._id?'selected':''}" onclick="amSelectRecord(${i})">
     <td><strong style="font-size:13px">${amEsc(rec.name||'—')}</strong>${rec.parent_name?`<br><span style="font-size:11px;color:#9CA3AF">${amEsc(rec.parent_name)}</span>`:''}  </td>
@@ -1245,7 +1302,7 @@ function amShowLoading(){
   document.getElementById('tableContainer').innerHTML='<div class="state-msg"><div class="spinner"></div><p style="margin-top:12px">載入資料中…</p></div>';
 }
 function amShowError(msg){
-  document.getElementById('tableContainer').innerHTML=`<div class="state-msg"><div class="icon">⚠️</div><h3>載入失敗</h3><p>${amEsc(msg)}</p><button onclick="amLoadRecords()" style="margin-top:12px;padding:7px 16px;border-radius:7px;border:1.5px solid #ddd;background:#fff;cursor:pointer;font-size:12px">重試</button></div>`;
+  document.getElementById('tableContainer').innerHTML=`<div class="state-msg"><div class="icon" data-warn="1"></div><h3>載入失敗</h3><p>${amEsc(msg)}</p><button onclick="amLoadRecords()" style="margin-top:12px;padding:7px 16px;border-radius:7px;border:1.5px solid #ddd;background:#fff;cursor:pointer;font-size:12px">重試</button></div>`;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1283,10 +1340,10 @@ function rpRenderReport(rec){
   document.getElementById('rpBackSub').textContent=`${ZW.clsShort[rec.class]||''} · ${ZW.roleLabel[rec.role]||''} · ${rec.eval_date||''}`;
 
   // emoji map
-  const clsIcon={qm:'🌟',kz:'💡',zy:'🔬'};
+  const clsIcon={qm:'啟',kz:'開',zy:'智'};
   let html=`
   <div class="rp-info-card">
-    <div class="rp-info-badge" style="background:${bg}">${clsIcon[rec.class]||'📋'}</div>
+    <div class="rp-info-badge" style="background:${bg}">${clsIcon[rec.class]||''}</div>
     <div class="rp-info-main">
       <div class="rp-info-name">${amEsc(rec.name||'—')}</div>
       <div class="rp-info-meta">${amEsc(rec.class_name||'')} ${rec.parent_name?'· 家長 '+amEsc(rec.parent_name):''} · 評量日期 ${amEsc(rec.eval_date||'—')}</div>
@@ -1299,7 +1356,7 @@ function rpRenderReport(rec){
   </div>`;
 
   if(!dims.length){
-    html+='<div class="rp-empty"><div class="icon">📭</div><p>此紀錄尚無維度資料。</p></div>';
+    html+='<div class="rp-empty"><div class="icon" data-empty="1"></div><p>此紀錄尚無維度資料。</p></div>';
     document.getElementById('rpWrap').innerHTML=html;return;
   }
 
@@ -1329,14 +1386,14 @@ function rpRenderReport(rec){
   const weaks  =sortedAsc.slice(0, Math.min(3,dims.length));
   html+=`<div class="rp-highlight">
     <div class="rp-hl-card strong">
-      <div class="rp-hl-title">⭐ 顯著強項 Top ${strongs.length}</div>
+      <div class="rp-hl-title">顯著強項 Top ${strongs.length}</div>
       <ul class="rp-hl-list">
         ${strongs.map(d=>`<li><span class="rp-hl-name">${amEsc(d.label)}</span>
           <span class="rp-hl-score" style="color:#22C55E">${d.avg.toFixed(2)}</span></li>`).join('')}
       </ul>
     </div>
     <div class="rp-hl-card weak">
-      <div class="rp-hl-title">🔧 建議加強 Top ${weaks.length}</div>
+      <div class="rp-hl-title">建議加強 Top ${weaks.length}</div>
       <ul class="rp-hl-list">
         ${weaks.map(d=>`<li><span class="rp-hl-name">${amEsc(d.label)}</span>
           <span class="rp-hl-score" style="color:#F59E0B">${d.avg.toFixed(2)}</span></li>`).join('')}
@@ -1440,7 +1497,7 @@ window.addEventListener('load',function(){
 </script>
 
 <!-- ════════════════════════════════════════════════════════════════
-     ★ 後台登入閘門 — Google OAuth (Identity Services)
+      後台登入閘門 — Google OAuth (Identity Services)
 ═════════════════════════════════════════════════════════════════ -->
 <div id="loginGate" style="position:fixed;inset:0;background:linear-gradient(135deg,#0F1B2D 0%,#1F2937 100%);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;padding:20px">
   <div style="max-width:420px;width:100%;text-align:center">
@@ -1454,9 +1511,23 @@ window.addEventListener('load',function(){
          data-auto_prompt="false"></div>
     <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill" data-logo_alignment="left" style="display:flex;justify-content:center"></div>
 
+    <div style="margin:18px 0 0;display:flex;align-items:center;gap:10px;color:#6B7280;font-size:11px">
+      <div style="flex:1;height:1px;background:#374151"></div>
+      <span>或</span>
+      <div style="flex:1;height:1px;background:#374151"></div>
+    </div>
+
+    <button id="testModeBtn" onclick="enterTestMode()" style="margin-top:14px;width:100%;padding:11px;border-radius:11px;border:1.5px solid #FFD600;background:rgba(255,214,0,.08);color:#FFD600;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:.18s">
+      測試模式進入（跳過 Google 驗證）
+    </button>
+    <div style="margin-top:8px;font-size:10px;color:#6B7280;text-align:center">
+      OAuth 還沒設好前，用這個入口先做功能測試。<br>
+      正式上線前記得在 admin.html 把 <code style="color:#9CA3AF">ALLOW_TEST_MODE</code> 改 <code style="color:#9CA3AF">false</code>
+    </div>
+
     <div id="loginMsg" style="margin-top:24px;font-size:12px;color:#FCA5A5;min-height:20px"></div>
     <div style="margin-top:32px;padding:14px;background:rgba(255,214,0,.08);border:1px solid rgba(255,214,0,.3);border-radius:10px;font-size:11px;color:#FFD600;text-align:left;line-height:1.7">
-      <strong>⚠️ 首次部署設定（管理員看）：</strong><br>
+      <strong>首次部署設定（管理員看）：</strong><br>
       1. <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#FFE066;text-decoration:underline">Google Cloud Console</a> → 建立 OAuth 2.0 Client ID（類型：Web 應用程式）<br>
       2. <strong>已授權 JavaScript 來源</strong>加：<br>
       &nbsp;&nbsp;&nbsp;<code style="color:#fff;font-size:10px">https://zway-education.github.io</code><br>
@@ -1471,11 +1542,40 @@ window.addEventListener('load',function(){
 
 <script>
 /* ── 後台登入控制 ───────────────────────────────────────────────── */
+/* ── 測試模式開關 ─────────────────────────────────────────────
+   true  = 顯示「 測試模式進入」按鈕（OAuth 還沒設好前可先用）
+   false = 隱藏，必須走 Google 登入（正式上線設這個）
+─────────────────────────────────────────────────────────────────── */
+const ALLOW_TEST_MODE = true;
+
 const ADMIN_EMAILS = [
-  // ⬇️ 在這裡列出可進後台的 Google 帳號 email（小寫）
+  // ⬇ 在這裡列出可進後台的 Google 帳號 email（小寫）
   'oscar19960613@gmail.com',
   // 'admin2@example.com',
 ];
+
+/* 測試模式直接放行，sessionStorage 標記 */
+function enterTestMode(){
+  if(!ALLOW_TEST_MODE){ alert('測試模式已關閉'); return; }
+  sessionStorage.setItem('adminEmail', 'test@dev.local');
+  sessionStorage.setItem('adminName', '測試模式');
+  sessionStorage.setItem('adminPic', '');
+  sessionStorage.setItem('adminLoginAt', Date.now());
+  sessionStorage.setItem('adminTestMode', '1');
+  _hideGate();
+  _renderAdminUserBox();
+  // 加一條紅色警示條到 nav 下方
+  setTimeout(function(){
+    const nav=document.querySelector('.g-nav');
+    if(!nav || document.getElementById('testModeBanner')) return;
+    const b=document.createElement('div');
+    b.id='testModeBanner';
+    b.style.cssText='position:fixed;top:'+nav.offsetHeight+'px;left:0;right:0;background:#FFD600;color:#000;padding:6px 16px;font-size:12px;font-weight:700;text-align:center;z-index:850;letter-spacing:.5px';
+    b.innerHTML='測試模式 — 跳過 OAuth 驗證中。正式上線前請把 ALLOW_TEST_MODE 設為 false';
+    document.body.appendChild(b);
+    document.body.style.paddingTop=(nav.offsetHeight+30)+'px';
+  }, 100);
+}
 
 /* GSI callback：JWT 解析 → email 白名單比對 */
 function handleCredentialResponse(response){
@@ -1519,7 +1619,7 @@ function _renderAdminUserBox(){
   if(emailEl){
     const name=sessionStorage.getItem('adminName')||'';
     const email=sessionStorage.getItem('adminEmail')||'';
-    emailEl.textContent='👤 '+(name?name+' · ':'')+email;
+    emailEl.textContent=' '+(name?name+' · ':'')+email;
   }
 }
 
@@ -1533,16 +1633,31 @@ function adminLogout(){
   location.reload();
 }
 
-/* 載入時：已登入就直接放行 */
+/* 載入時：已登入或測試模式中就直接放行 */
 (function(){
   const email=sessionStorage.getItem('adminEmail');
-  if(email && ADMIN_EMAILS.map(e=>e.toLowerCase()).includes(email.toLowerCase())){
+  const isTest=sessionStorage.getItem('adminTestMode')==='1';
+  const inWhitelist=email && ADMIN_EMAILS.map(e=>e.toLowerCase()).includes(email.toLowerCase());
+  if(isTest && ALLOW_TEST_MODE){
+    document.addEventListener('DOMContentLoaded', function(){
+      _hideGate();
+      _renderAdminUserBox();
+      enterTestMode();  // 重新顯示警示條
+    });
+  } else if(inWhitelist){
     document.addEventListener('DOMContentLoaded', function(){
       _hideGate();
       _renderAdminUserBox();
     });
   } else {
     document.body.style.overflow='hidden';
+    // 若 ALLOW_TEST_MODE=false 則隱藏測試按鈕
+    document.addEventListener('DOMContentLoaded', function(){
+      if(!ALLOW_TEST_MODE){
+        const b=document.getElementById('testModeBtn');
+        if(b) b.parentNode.removeChild(b);
+      }
+    });
   }
 })();
 </script>
