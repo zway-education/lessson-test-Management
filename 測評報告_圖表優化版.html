@@ -215,10 +215,13 @@ img,canvas,svg,video{max-width:100%;height:auto}
   .meta{font-size:10px;gap:8px}
 }
 
+/* 右下角版本徽章 */
+.version-badge{position:fixed;bottom:8px;right:10px;z-index:9999;font-family:monospace;font-size:10px;color:#999;background:rgba(255,255,255,.85);padding:3px 8px;border-radius:10px;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,.06);pointer-events:none}
+
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   body{margin:0;background:#fff}
-  .tab-bar,.print-fab,.print-modal-bg{display:none!important}
+  .tab-bar,.print-fab,.print-modal-bg,.version-badge{display:none!important}
   .cls{display:none!important}
   .cls.print-target{display:block!important}
   .report{box-shadow:none!important;border-radius:0!important;max-width:100%!important}
@@ -233,6 +236,7 @@ img,canvas,svg,video{max-width:100%;height:auto}
 </style>
 </head>
 <body>
+<div class="version-badge">v1.04</div>
 <div id="app">
 <div class="top-nav">
   <div class="nav-label">班別</div>
