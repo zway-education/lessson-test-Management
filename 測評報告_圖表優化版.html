@@ -1227,14 +1227,14 @@ function directPrint(){
 initCharts('qm');
 
 /* ════════════════════════════════════════════════════════════════
-   ★ 動態資料覆蓋層 — 從 localStorage.report_record 讀取真實學員紀錄
-   並覆蓋 banner、統計卡，自動切到該班別 tab，移除其他班別
+   ★ 動態資料覆蓋層
+     資料來源優先順序：
+       (1) URL 參數 ?name=X&class=Y  → 呼叫 Apps Script getRecordPair
+                                       拿學生 + 家長兩筆做交叉分析
+       (2) localStorage.report_record → 單筆（送出後立即查看）
+     若兩者皆無則維持靜態 demo 資料
 ════════════════════════════════════════════════════════════════ */
-(function(){
-  let rec=null;
-  try{ rec=JSON.parse(localStorage.getItem('report_record')||'null'); }catch(e){}
-  if(!rec || !rec.class) return;
-
+(async function(){
   const ZWCfg={
     qm_parent:  ['', '左右腦',   '大腦五力', '多元智能', '教養風格', '關係&環境'],
     zy_student: ['', 'ASK',      '4C',       '覺知五力', '多元智能', 'RIASEC'],
@@ -1242,96 +1242,206 @@ initCharts('qm');
     kz_student: ['', '多元智能', '4C',       'ASK'],
     kz_parent:  ['', '多元智能', '4C',       'ASK',      '教養風格'],
   };
-  const qKey=rec.qKey||(rec.class+'_'+(rec.role||'parent'));
-  const labels=ZWCfg[qKey]||[];
-  const dims=[];
-  for(let s=1;s<labels.length;s++){
-    const vals=[]; for(let q=0;q<50;q++){
-      const v=rec[qKey+'_s'+s+'_q'+q]; if(v===undefined) break; vals.push(Number(v));
+  function fmtDate(d){ if(!d) return '—'; return String(d).replace(/-/g,'/').slice(0,10); }
+  function calcDims(rec){
+    if(!rec) return [];
+    const qKey = rec.qKey || (rec.class + '_' + (rec.role || 'parent'));
+    const labels = ZWCfg[qKey] || [];
+    const out = [];
+    for(let s=1; s<labels.length; s++){
+      const vals=[];
+      for(let q=0; q<60; q++){
+        const v = rec[qKey+'_s'+s+'_q'+q];
+        if(v==='' || v===undefined || v===null) break;
+        const n = Number(v);
+        if(!isNaN(n) && n>0) vals.push(n);
+      }
+      if(vals.length){
+        const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+        out.push({ label:labels[s], avg:Math.round(avg*100)/100, count:vals.length, vals:vals });
+      }
     }
-    if(vals.length){
-      const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
-      dims.push({label:labels[s], avg:Math.round(avg*100)/100, count:vals.length, vals:vals});
+    return out;
+  }
+
+  // 1) 解析 URL 參數
+  const urlParams = new URLSearchParams(location.search);
+  const urlName  = urlParams.get('name');
+  const urlClass = urlParams.get('class');
+
+  let recParent = null, recStudent = null;
+  let primary = null;   // 用來驅動 banner / highlight 等以單筆為主的部份（優先 parent）
+
+  // 2) 若有 URL 參數 → fetch 雙方資料
+  if(urlName && urlClass){
+    const APPS = (window.ZW && window.ZW.APPS_SCRIPT_URL) || '';
+    if(APPS && APPS !== 'YOUR_APPS_SCRIPT_URL_HERE'){
+      try{
+        const url = APPS + '?action=getRecordPair&name=' + encodeURIComponent(urlName) + '&class=' + encodeURIComponent(urlClass);
+        const res = await fetch(url);
+        const json = await res.json();
+        if(json.status === 'ok'){
+          recStudent = json.student || null;
+          recParent  = json.parent  || null;
+        }
+      }catch(e){ console.warn('getRecordPair 失敗', e); }
     }
   }
 
-  function fmtDate(d){ if(!d) return '—'; return String(d).replace(/-/g,'/').slice(0,10); }
-  const clsLabel={qm:'啟蒙班',kz:'開智班',zy:'智優班'}[rec.class]||'';
-  const roleLabel={student:'學生自填',parent:'家長填寫'}[rec.role]||'';
-  const colorMain={qm:'#FF8C00',zy:'#1251A3',kz:'#1B6E35'}[rec.class]||'#555';
-  const colorBg={qm:'#FFF8EE',zy:'#EEF3FF',kz:'#EDF8F1'}[rec.class]||'#fff';
+  // 3) 沒從 URL 拿到 → 退回 localStorage 單筆
+  if(!recParent && !recStudent){
+    let single = null;
+    try{ single = JSON.parse(localStorage.getItem('report_record') || 'null'); }catch(e){}
+    if(single && single.class){
+      if(single.role === 'student') recStudent = single;
+      else recParent = single;
+    }
+  }
+
+  // 4) 都沒有 → 保留靜態 demo 資料
+  if(!recParent && !recStudent) return;
+
+  primary = recParent || recStudent;
+  const cls = primary.class;
+  const dimsP = calcDims(recParent);
+  const dimsS = calcDims(recStudent);
+  const hasBoth = !!(recParent && recStudent);
+  const clsLabel = {qm:'啟蒙班',kz:'開智班',zy:'智優班'}[cls] || '';
+  const colorMain = {qm:'#FF8C00',zy:'#1251A3',kz:'#1B6E35'}[cls] || '#555';
+  const colorBg   = {qm:'#FFF8EE',zy:'#EEF3FF',kz:'#EDF8F1'}[cls] || '#fff';
+
+  // 用主要紀錄回填到 localStorage（讓重新整理仍可顯示）
+  try{ localStorage.setItem('report_record', JSON.stringify(primary)); }catch(e){}
 
   // 切到對應班別（若有 sw 函式）
-  if(typeof sw==='function'){ try{ sw(rec.class); }catch(e){} }
+  if(typeof sw==='function'){ try{ sw(cls); }catch(e){} }
 
   // 隱藏整個 top-nav（鎖定該班別）
-  const nav=document.querySelector('.top-nav');
+  const nav = document.querySelector('.top-nav');
   if(nav) nav.style.display='none';
 
-  // 列印按鈕已固定使用 directPrint()，會自動以當前測驗者班別為列印目標
-  // （不需再覆寫 onclick；Modal 已從 HTML 移除）
-
-  // 把其他 .cls section 從 DOM 移除（含 sec_cmp）
+  // 把其他 .cls section 從 DOM 移除（保留 sec_cmp 才有交叉對比；若沒有雙方則一併移除 sec_cmp）
   document.querySelectorAll('.cls').forEach(function(sec){
-    if(sec.id!=='sec_'+rec.class){
+    const keep = sec.id === 'sec_'+cls || (hasBoth && sec.id === 'sec_cmp');
+    if(!keep){
       sec.parentNode && sec.parentNode.removeChild(sec);
-    } else {
+    } else if(sec.id === 'sec_'+cls){
       sec.classList.add('active');
-      sec.style.display='block';
+      sec.style.display = 'block';
     }
   });
 
   // 在 #app 頂部加 live banner
-  const app=document.getElementById('app');
+  const app = document.getElementById('app');
   if(app){
-    const note=document.createElement('div');
-    note.style.cssText='margin-bottom:14px;padding:10px 16px;background:#1F2937;color:#FFD600;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap';
-    note.innerHTML='<span>🔴 即時資料：'+(rec.name||'')+' · '+clsLabel+' · '+roleLabel+
-      ' · 共 '+dims.length+' 維度／'+dims.reduce(function(s,d){return s+d.count;},0)+' 題</span>'+
-      '<button onclick="localStorage.removeItem(\'report_record\');location.reload()" style="background:#FFD600;color:#000;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">清除動態資料</button>';
+    const note = document.createElement('div');
+    note.style.cssText = 'margin-bottom:14px;padding:10px 16px;background:#1F2937;color:#FFD600;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap';
+    const stateTxt = hasBoth
+      ? '🟢 雙方完成：學生 ✓ 家長 ✓'
+      : (recStudent ? '🟡 僅學生填寫（家長尚未完成）' : '🟡 僅家長填寫（學生尚未完成）');
+    note.innerHTML =
+      '<span>🔴 即時資料：'+(primary.name||'')+' · '+clsLabel+' · '+stateTxt+'</span>'+
+      '<button onclick="localStorage.removeItem(\'report_record\');location.href=location.pathname" style="background:#FFD600;color:#000;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">清除動態資料</button>';
     app.insertBefore(note, app.firstChild);
   }
 
-  // 覆蓋 banner（依班別 .qm-banner / .zy-banner / .kz-banner）
-  const banner=document.querySelector('.'+rec.class+'-banner');
+  // 覆蓋 banner
+  const banner = document.querySelector('.'+cls+'-banner');
   if(banner){
-    const meta=banner.querySelector('.meta');
+    const meta = banner.querySelector('.meta');
     if(meta){
-      meta.innerHTML=
-        '<span>👤 '+(rec.name||'—')+'</span>'+
-        '<span>🏫 '+(rec.class_name||'—')+'</span>'+
-        '<span>📆 '+fmtDate(rec.eval_date||rec.fill_date||rec.timestamp)+'</span>'+
-        (rec.parent_name?'<span>👪 '+rec.parent_name+'</span>':'');
+      meta.innerHTML =
+        '<span>👤 '+(primary.name||'—')+'</span>'+
+        '<span>🏫 '+(primary.class_name||'—')+'</span>'+
+        '<span>📆 '+fmtDate(primary.eval_date||primary.fill_date||primary.timestamp)+'</span>'+
+        (primary.parent_name?'<span>👪 '+primary.parent_name+'</span>':'');
     }
   }
 
-  // 覆蓋 highlight 卡片（.qm-hl / .zy-hl / .kz-hl 內的 .v / .l）
-  const hlCards=document.querySelectorAll('.'+rec.class+'-hl');
-  if(hlCards.length && dims.length){
+  // 覆蓋 highlight 卡片（用主要紀錄的維度）
+  const dimsPrimary = recParent ? dimsP : dimsS;
+  const hlCards = document.querySelectorAll('.'+cls+'-hl');
+  if(hlCards.length && dimsPrimary.length){
     hlCards.forEach(function(card,i){
-      const dim=dims[i]; if(!dim) return;
-      const vEl=card.querySelector('.v');
-      const lEl=card.querySelector('.l');
-      if(vEl){ vEl.textContent=dim.avg.toFixed(2); vEl.style.fontSize='24px'; }
-      if(lEl){ lEl.textContent=dim.label+' 均值'; }
+      const dim = dimsPrimary[i]; if(!dim) return;
+      const vEl = card.querySelector('.v');
+      const lEl = card.querySelector('.l');
+      if(vEl){ vEl.textContent = dim.avg.toFixed(2); vEl.style.fontSize = '24px'; }
+      if(lEl){ lEl.textContent = dim.label+' 均值'; }
     });
   }
 
-  // 在班別區塊頂部插入 live 維度卡片區
-  const sec=document.getElementById('sec_'+rec.class);
-  if(sec && dims.length){
-    const dynBlock=document.createElement('div');
-    dynBlock.style.cssText='background:#fff;border-radius:14px;padding:18px 20px;margin:0 0 14px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-left:5px solid '+colorMain;
-    dynBlock.innerHTML='<div style="font-weight:900;font-size:14px;color:'+colorMain+';margin-bottom:14px">📊 本筆紀錄各維度均分（live）</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'+
-      dims.map(function(d){
-        return '<div style="background:'+colorBg+';border-radius:10px;padding:10px 12px">'+
-          '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="font-weight:700">'+d.label+'</span><span style="color:'+colorMain+';font-weight:900">'+d.avg.toFixed(2)+' / 5</span></div>'+
-          '<div style="height:7px;background:#fff;border-radius:4px;overflow:hidden"><div style="width:'+(d.avg/5*100)+'%;height:100%;background:'+colorMain+'"></div></div>'+
-          '<div style="font-size:10px;color:#888;margin-top:4px">'+d.count+' 題</div>'+
-        '</div>';
-      }).join('')+
+  // ── 在班別區塊頂部插入「雙方交叉分析」live 區塊 ──────────
+  const sec = document.getElementById('sec_'+cls);
+  if(sec){
+    const dynBlock = document.createElement('div');
+    dynBlock.style.cssText = 'background:#fff;border-radius:14px;padding:18px 20px;margin:0 0 14px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-left:5px solid '+colorMain;
+
+    // 標題
+    let html = '<div style="font-weight:900;font-size:14px;color:'+colorMain+';margin-bottom:14px">'+
+      (hasBoth ? '🔁 學生 vs 家長 雙方交叉分析（live）' : '📊 本筆紀錄各維度均分（live）')+
       '</div>';
+
+    // 維度合集（取雙方標籤的聯集，保持原順序：以家長為主）
+    const allLabels = [];
+    (dimsPrimary.length ? dimsPrimary : (dimsS.length ? dimsS : dimsP)).forEach(d=>{
+      if(allLabels.indexOf(d.label) < 0) allLabels.push(d.label);
+    });
+    (hasBoth ? dimsS : []).forEach(d=>{
+      if(allLabels.indexOf(d.label) < 0) allLabels.push(d.label);
+    });
+    const findAvg = (arr, lbl) => { const it = arr.find(d=>d.label===lbl); return it ? it.avg : null; };
+
+    if(hasBoth){
+      // 雙方比對表
+      html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'+
+        '<thead><tr style="background:#fafafa">'+
+          '<th style="padding:8px 10px;text-align:left;color:#888;font-weight:700;border-bottom:1px solid #eee">維度</th>'+
+          '<th style="padding:8px 10px;text-align:center;color:#1B6E35;font-weight:700;border-bottom:1px solid #eee">學生自評</th>'+
+          '<th style="padding:8px 10px;text-align:center;color:#1251A3;font-weight:700;border-bottom:1px solid #eee">家長觀察</th>'+
+          '<th style="padding:8px 10px;text-align:center;color:#5E35B1;font-weight:700;border-bottom:1px solid #eee">差距</th>'+
+        '</tr></thead><tbody>';
+      allLabels.forEach(lbl=>{
+        const sV = findAvg(dimsS, lbl);
+        const pV = findAvg(dimsP, lbl);
+        const sStr = sV===null ? '—' : sV.toFixed(2);
+        const pStr = pV===null ? '—' : pV.toFixed(2);
+        const diff = (sV!==null && pV!==null) ? Math.abs(sV - pV).toFixed(2) : '—';
+        const diffColor = (sV!==null && pV!==null && Math.abs(sV-pV) >= 1.0) ? '#D32F2F' : '#888';
+        // 兩條 bar 並排
+        const sPct = sV===null ? 0 : Math.round(sV/5*100);
+        const pPct = pV===null ? 0 : Math.round(pV/5*100);
+        html += '<tr>'+
+          '<td style="padding:10px;border-bottom:1px solid #f5f5f5;font-weight:700">'+lbl+'</td>'+
+          '<td style="padding:10px;border-bottom:1px solid #f5f5f5;text-align:center">'+
+            '<div style="font-weight:700;color:#1B6E35;margin-bottom:4px">'+sStr+'</div>'+
+            '<div style="background:#eee;height:6px;border-radius:3px;overflow:hidden"><div style="width:'+sPct+'%;height:100%;background:#1B6E35"></div></div>'+
+          '</td>'+
+          '<td style="padding:10px;border-bottom:1px solid #f5f5f5;text-align:center">'+
+            '<div style="font-weight:700;color:#1251A3;margin-bottom:4px">'+pStr+'</div>'+
+            '<div style="background:#eee;height:6px;border-radius:3px;overflow:hidden"><div style="width:'+pPct+'%;height:100%;background:#1251A3"></div></div>'+
+          '</td>'+
+          '<td style="padding:10px;border-bottom:1px solid #f5f5f5;text-align:center;font-weight:700;color:'+diffColor+'">'+diff+'</td>'+
+          '</tr>';
+      });
+      html += '</tbody></table></div>'+
+        '<div style="margin-top:10px;font-size:11px;color:#888">'+
+        '差距 ≥ 1.0 以紅色標示 ・ 量表：1（完全不符合）– 5（完全符合）'+
+        '</div>';
+    } else {
+      // 單方時用色塊網格
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'+
+        dimsPrimary.map(function(d){
+          return '<div style="background:'+colorBg+';border-radius:10px;padding:10px 12px">'+
+            '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="font-weight:700">'+d.label+'</span><span style="color:'+colorMain+';font-weight:900">'+d.avg.toFixed(2)+' / 5</span></div>'+
+            '<div style="height:7px;background:#fff;border-radius:4px;overflow:hidden"><div style="width:'+(d.avg/5*100)+'%;height:100%;background:'+colorMain+'"></div></div>'+
+            '<div style="font-size:10px;color:#888;margin-top:4px">'+d.count+' 題</div>'+
+          '</div>';
+        }).join('')+
+        '</div>';
+    }
+
+    dynBlock.innerHTML = html;
     sec.insertBefore(dynBlock, sec.firstChild);
   }
 })();
