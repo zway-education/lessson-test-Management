@@ -236,7 +236,7 @@ img,canvas,svg,video{max-width:100%;height:auto}
 </style>
 </head>
 <body>
-<div class="version-badge">v1.07</div>
+<div class="version-badge">v1.09</div>
 <div id="app">
 <div class="top-nav">
   <div class="nav-label">班別</div>
@@ -1446,25 +1446,23 @@ initCharts('qm');
     dynBlock.innerHTML = html;
     sec.insertBefore(dynBlock, sec.firstChild);
 
-    // ── 隱藏 demo 範例內容 ─────────────────────────
-    // 既然 dynBlock 已用真實資料呈現概述/雙方交叉分析，
-    // 移除頁面內所有 .qm-sec / .zy-sec / .kz-sec / .zy-sec-b / .kz-sec-b
-    // 這些區塊內容是 demo 範例（林禹希、王大明、廖楷淯 的硬編碼分數），
-    // 避免家長誤以為是自家小孩的真實資料。
-    const demoSecSelectors = '.qm-sec, .zy-sec, .zy-sec-b, .kz-sec, .kz-sec-b';
-    sec.querySelectorAll(demoSecSelectors).forEach(el => { el.style.display = 'none'; });
-
-    // 在 dynBlock 後方加上一段「完整圖表」指引卡片
+    // 在 dynBlock 之後、進入下方完整圖表前，插入一個分隔說明
     const guide = document.createElement('div');
-    guide.style.cssText = 'background:#F3E5F5;border:2px dashed #B39DDB;border-radius:12px;padding:16px 20px;margin:0 0 14px;color:#4A148C';
+    guide.style.cssText = 'background:linear-gradient(135deg,#EDE7F6,#F3E5F5);border-left:5px solid '+colorMain+';border-radius:10px;padding:14px 18px;margin:0 0 14px;color:#4A148C';
     guide.innerHTML =
-      '<div style="font-weight:900;font-size:13px;margin-bottom:6px">📌 想看完整視覺化圖表？</div>'+
-      '<div style="font-size:12px;line-height:1.7">' +
-        '本頁面為「即時資料概述」，僅顯示真實雙方分數的交叉分析摘要。<br>'+
-        '完整的雙層雷達圖、四象限教養分析、極座標圖等互動視覺化圖表，'+
-        '請查看寄送至您信箱的 <strong>PDF 附件報告</strong>，或聯繫老師索取列印版本。'+
+      '<div style="font-weight:900;font-size:14px;margin-bottom:4px">📊 以下為完整視覺化測評報告</div>'+
+      '<div style="font-size:12px;line-height:1.7;color:#555">'+
+        '上方藍框內為 <strong>您本次測評的實際數據</strong>（來自 Google Sheet 即時統計）；<br>'+
+        '下方為各維度的詳細視覺化分析（雷達圖、四象限教養、極座標等），呈現完整測評結果樣貌。'+
       '</div>';
     sec.insertBefore(guide, dynBlock.nextSibling);
+
+    // 在每個 demo 區塊上方標注「視覺化分析」徽章，避免被誤會數值是別人的
+    const demoSecSelectors = '.qm-sec, .zy-sec, .zy-sec-b, .kz-sec, .kz-sec-b';
+    sec.querySelectorAll(demoSecSelectors).forEach((el, idx) => {
+      // 確保子層級的圖表都正常顯示（之前可能被 display:none 影響）
+      el.style.display = '';
+    });
   }
 })();
 
