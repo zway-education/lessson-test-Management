@@ -236,7 +236,7 @@ img,canvas,svg,video{max-width:100%;height:auto}
 </style>
 </head>
 <body>
-<div class="version-badge">v1.13</div>
+<div class="version-badge">v1.15</div>
 <div id="app">
 <div class="top-nav">
   <div class="nav-label">班別</div>
@@ -1344,6 +1344,14 @@ initCharts('qm');
     }
   });
 
+  // ── debug log（您按 F12 打開 Console 可以看到）─────────────
+  console.log('[測評報告 v1.15] 動態資料載入', {
+    hasBoth, primary,
+    recStudentName: recStudent ? recStudent.name : null,
+    recParentName : recParent  ? recParent.name  : null,
+    diagSrc: _diagSrc, diagApi: _diagApi,
+  });
+
   // 在 #app 頂部加狀態 banner（家長端友善版 + 診斷資訊）
   const app = document.getElementById('app');
   if(app){
@@ -1353,9 +1361,10 @@ initCharts('qm');
       (isOk
         ? 'background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7'
         : 'background:#FFF3E0;color:#E65100;border:1px solid #FFCC80');
+    const vTag = '<span style="font-family:monospace;font-size:10px;color:#666;font-weight:400;background:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">v1.15</span>';
     let mainTxt = isOk
-      ? '✅ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（學生 + 家長雙方均已完成）'
-      : '⚠️ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（'+(recStudent?'家長尚未完成':'學生尚未完成')+'，目前僅顯示單方資料）';
+      ? '✅ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（學生 + 家長雙方均已完成）' + vTag
+      : '⚠️ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（'+(recStudent?'家長尚未完成':'學生尚未完成')+'，目前僅顯示單方資料）' + vTag;
     // 不完整時加上診斷資訊（讓您一眼看出問題）
     let diag = '';
     if(!isOk){
@@ -1403,7 +1412,10 @@ initCharts('qm');
     const emailDisp  = primary.email || '—';
 
     // 一份報告可能有多個 .info-compact（學習概況、概覽等）— 全部都更新
-    sec_for_info.querySelectorAll('.info-compact').forEach(ic => {
+    const icList = sec_for_info.querySelectorAll('.info-compact');
+    console.log('[v1.15] 覆寫評測概覽：找到', icList.length, '個 .info-compact，將寫入', primary.name);
+    icList.forEach(ic => {
+      ic.setAttribute('data-real-data', '1');   // 標記已寫入真實資料
       ic.innerHTML =
         `<div class="ic-row"><span class="ic-l"${labelStyle}>孩子姓名</span><span class="ic-v">${primary.name||'—'}</span><span class="ic-l"${labelStyle}>就讀班級</span><span class="ic-v">${primary.class_name||'—'}</span></div>` +
         `<div class="ic-row"><span class="ic-l"${labelStyle}>評量日期</span><span class="ic-v">${fmtDate(primary.eval_date)}</span><span class="ic-l"${labelStyle}>填寫日期</span><span class="ic-v">${fmtDate(primary.fill_date||primary.timestamp)}</span></div>` +

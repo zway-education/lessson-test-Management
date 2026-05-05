@@ -8,7 +8,7 @@
 const ZW = {
 
   /* ── 系統版本（顯示於頁面右下角徽章）── */
-  VERSION: 'v1.13',
+  VERSION: 'v1.15',
 
   /* ── Apps Script 網址（三支頁面統一從這裡讀取）── */
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxQNjBnZnw90piQd4k55MGUoRJQG9Gn0gsj_6XkMZHVuOyvb-b3JQz3uLFxpmId6WD9Zw/exec',

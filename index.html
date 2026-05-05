@@ -501,7 +501,7 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
 </head>
 <body>
 <!-- 版本徽章（右下角固定） -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:10px;z-index:9999;font-family:monospace;font-size:10px;color:#999;background:rgba(255,255,255,.85);padding:3px 8px;border-radius:10px;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,.06);pointer-events:none">v1.13</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:10px;z-index:9999;font-family:monospace;font-size:10px;color:#999;background:rgba(255,255,255,.85);padding:3px 8px;border-radius:10px;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,.06);pointer-events:none">v1.15</div>
 <!-- ══ Global Nav ══════════════════════════════════════════════ -->
 <nav class="g-nav">
   <div class="g-logo">台灣展威文化教育<small>TAIWAN ZHANWEI EDUCATION</small></div>
@@ -509,9 +509,7 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;backgr
     <button class="g-tab active" id="nav-admin" onclick="showPage('admin')">
       資料管理
     </button>
-    <button class="g-tab" id="nav-report" onclick="showPage('report')">
-      測評報告
-    </button>
+    <!-- 測評報告 tab 已移除（從「資料管理」清單點開啟報告會在新分頁開啟，不需獨立 tab） -->
   </div>
   <div id="adminUserBox" style="display:none;align-items:center;gap:8px;color:#fff;font-size:12px;margin-left:auto;padding-right:16px">
     <span id="adminUserEmail" style="opacity:.85"></span>
