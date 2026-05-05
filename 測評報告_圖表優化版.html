@@ -236,7 +236,7 @@ img,canvas,svg,video{max-width:100%;height:auto}
 </style>
 </head>
 <body>
-<div class="version-badge">v1.15</div>
+<div class="version-badge">v1.16</div>
 <div id="app">
 <div class="top-nav">
   <div class="nav-label">班別</div>
@@ -1277,7 +1277,9 @@ initCharts('qm');
 
   // 2) 若有 URL 參數 → fetch 雙方資料
   if(urlName && urlClass){
-    const APPS = (window.ZW && window.ZW.APPS_SCRIPT_URL) || '';
+    // ★ 修：config.js 用 `const ZW`，不會自動掛到 window 上，要直接用 ZW
+    const ZWobj = (typeof ZW !== 'undefined') ? ZW : (window.ZW || null);
+    const APPS = (ZWobj && ZWobj.APPS_SCRIPT_URL) || '';
     if(APPS && APPS !== 'YOUR_APPS_SCRIPT_URL_HERE'){
       try{
         const url = APPS + '?action=getRecordPair&name=' + encodeURIComponent(urlName) + '&class=' + encodeURIComponent(urlClass);
@@ -1345,7 +1347,7 @@ initCharts('qm');
   });
 
   // ── debug log（您按 F12 打開 Console 可以看到）─────────────
-  console.log('[測評報告 v1.15] 動態資料載入', {
+  console.log('[測評報告 v1.16] 動態資料載入', {
     hasBoth, primary,
     recStudentName: recStudent ? recStudent.name : null,
     recParentName : recParent  ? recParent.name  : null,
@@ -1361,7 +1363,7 @@ initCharts('qm');
       (isOk
         ? 'background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7'
         : 'background:#FFF3E0;color:#E65100;border:1px solid #FFCC80');
-    const vTag = '<span style="font-family:monospace;font-size:10px;color:#666;font-weight:400;background:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">v1.15</span>';
+    const vTag = '<span style="font-family:monospace;font-size:10px;color:#666;font-weight:400;background:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">v1.16</span>';
     let mainTxt = isOk
       ? '✅ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（學生 + 家長雙方均已完成）' + vTag
       : '⚠️ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（'+(recStudent?'家長尚未完成':'學生尚未完成')+'，目前僅顯示單方資料）' + vTag;
@@ -1413,7 +1415,7 @@ initCharts('qm');
 
     // 一份報告可能有多個 .info-compact（學習概況、概覽等）— 全部都更新
     const icList = sec_for_info.querySelectorAll('.info-compact');
-    console.log('[v1.15] 覆寫評測概覽：找到', icList.length, '個 .info-compact，將寫入', primary.name);
+    console.log('[v1.16] 覆寫評測概覽：找到', icList.length, '個 .info-compact，將寫入', primary.name);
     icList.forEach(ic => {
       ic.setAttribute('data-real-data', '1');   // 標記已寫入真實資料
       ic.innerHTML =
