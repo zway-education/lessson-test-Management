@@ -236,7 +236,7 @@ img,canvas,svg,video{max-width:100%;height:auto}
 </style>
 </head>
 <body>
-<div class="version-badge">v1.10</div>
+<div class="version-badge">v1.13</div>
 <div id="app">
 <div class="top-nav">
   <div class="nav-label">班別</div>
@@ -1272,6 +1272,8 @@ initCharts('qm');
 
   let recParent = null, recStudent = null;
   let primary = null;   // 用來驅動 banner / highlight 等以單筆為主的部份（優先 parent）
+  let _diagApi = '';    // 診斷：API 狀態
+  let _diagSrc = '';    // 診斷：資料來源
 
   // 2) 若有 URL 參數 → fetch 雙方資料
   if(urlName && urlClass){
@@ -1284,8 +1286,17 @@ initCharts('qm');
         if(json.status === 'ok'){
           recStudent = json.student || null;
           recParent  = json.parent  || null;
+          _diagSrc = 'getRecordPair API';
+          _diagApi = `學生 ${recStudent?'1':'0'} 筆／家長 ${recParent?'1':'0'} 筆`;
+        } else {
+          _diagApi = '後端錯誤: ' + (json.message || '未知');
         }
-      }catch(e){ console.warn('getRecordPair 失敗', e); }
+      }catch(e){
+        _diagApi = '後端無法連線: ' + e.message;
+        console.warn('getRecordPair 失敗', e);
+      }
+    } else {
+      _diagApi = 'config.js 未設定 APPS_SCRIPT_URL';
     }
   }
 
@@ -1296,6 +1307,7 @@ initCharts('qm');
     if(single && single.class){
       if(single.role === 'student') recStudent = single;
       else recParent = single;
+      _diagSrc = 'localStorage（API 失敗回退）';
     }
   }
 
@@ -1332,7 +1344,7 @@ initCharts('qm');
     }
   });
 
-  // 在 #app 頂部加狀態 banner（家長端友善版）
+  // 在 #app 頂部加狀態 banner（家長端友善版 + 診斷資訊）
   const app = document.getElementById('app');
   if(app){
     const note = document.createElement('div');
@@ -1341,9 +1353,28 @@ initCharts('qm');
       (isOk
         ? 'background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7'
         : 'background:#FFF3E0;color:#E65100;border:1px solid #FFCC80');
-    note.innerHTML = isOk
+    let mainTxt = isOk
       ? '✅ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（學生 + 家長雙方均已完成）'
       : '⚠️ 本報告為 <strong>'+(primary.name||'')+'</strong> 的個人測評結果（'+(recStudent?'家長尚未完成':'學生尚未完成')+'，目前僅顯示單方資料）';
+    // 不完整時加上診斷資訊（讓您一眼看出問題）
+    let diag = '';
+    if(!isOk){
+      diag = '<details style="margin-top:8px;font-weight:400;text-align:left;font-size:11px;cursor:pointer">'
+        + '<summary style="color:#666;cursor:pointer">🔍 顯示診斷資訊</summary>'
+        + '<div style="margin-top:6px;padding:8px 10px;background:#fff;border-radius:6px;color:#444;line-height:1.7">'
+        +   '<div><strong>資料來源：</strong>' + (_diagSrc || '無') + '</div>'
+        +   '<div><strong>API 回應：</strong>' + (_diagApi || '未呼叫') + '</div>'
+        +   '<div><strong>查詢參數：</strong>name=' + (urlName||'(無)') + '、class=' + (urlClass||'(無)') + '</div>'
+        +   '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #eee;color:#888">'
+        +     '<strong>常見原因：</strong><br>'
+        +     '1. Apps Script 沒重新部署（API 回應顯示「後端錯誤」或「無法連線」）<br>'
+        +     '2. Sheet 中該角色紀錄的姓名欄位有空白／全形差異<br>'
+        +     '3. 兩筆紀錄分屬不同班別工作表'
+        +   '</div>'
+        + '</div>'
+        + '</details>';
+    }
+    note.innerHTML = mainTxt + diag;
     app.insertBefore(note, app.firstChild);
   }
 
@@ -1358,6 +1389,27 @@ initCharts('qm');
         '<span>📆 '+fmtDate(primary.eval_date||primary.fill_date||primary.timestamp)+'</span>'+
         (primary.parent_name?'<span>👪 '+primary.parent_name+'</span>':'');
     }
+  }
+
+  // ── 覆蓋「評測概覽」基本資料表（.info-compact）為真實受試者資料 ────
+  const sec_for_info = document.getElementById('sec_'+cls);
+  if(sec_for_info){
+    const accentMap = { qm:'#FF6B35', zy:'#1A5FBF', kz:'#239B4A' };
+    const accentColor = accentMap[cls] || colorMain;
+    // QM 班的 ic-l 沒有色彩屬性、ZY/KZ 用班別主色
+    const labelStyle = (cls === 'qm') ? '' : ` style="color:${colorMain}"`;
+    const parentDisp = (primary.parent_name || '—') + (primary.prel ? ' ('+primary.prel+')' : '');
+    const phoneDisp  = primary.phone || '—';
+    const emailDisp  = primary.email || '—';
+
+    // 一份報告可能有多個 .info-compact（學習概況、概覽等）— 全部都更新
+    sec_for_info.querySelectorAll('.info-compact').forEach(ic => {
+      ic.innerHTML =
+        `<div class="ic-row"><span class="ic-l"${labelStyle}>孩子姓名</span><span class="ic-v">${primary.name||'—'}</span><span class="ic-l"${labelStyle}>就讀班級</span><span class="ic-v">${primary.class_name||'—'}</span></div>` +
+        `<div class="ic-row"><span class="ic-l"${labelStyle}>評量日期</span><span class="ic-v">${fmtDate(primary.eval_date)}</span><span class="ic-l"${labelStyle}>填寫日期</span><span class="ic-v">${fmtDate(primary.fill_date||primary.timestamp)}</span></div>` +
+        `<div class="ic-row"><span class="ic-l"${labelStyle}>家長姓名</span><span class="ic-v">${parentDisp}</span><span class="ic-l"${labelStyle}>聯絡電話</span><span class="ic-v">${phoneDisp}</span></div>` +
+        `<div class="ic-row"><span class="ic-l"${labelStyle}>聯絡信箱</span><span class="ic-v" style="color:${accentColor};word-break:break-all">${emailDisp}</span></div>`;
+    });
   }
 
   // 覆蓋 highlight 卡片（用主要紀錄的維度）
